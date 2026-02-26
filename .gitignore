@@ -6,6 +6,9 @@
 *.dylib
 bin/
 
+# Local data
+*.db
+
 # Test binary
 *.test
 
