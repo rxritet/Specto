@@ -1,8 +1,10 @@
 package main
 
 import (
-	"fmt"
+	"log/slog"
 
+	"github.com/rxritet/Specto/internal/config"
+	"github.com/rxritet/Specto/internal/server"
 	"github.com/spf13/cobra"
 )
 
@@ -11,8 +13,11 @@ var serverCmd = &cobra.Command{
 	Short: "Start the Specto HTTP server",
 	Long:  "Launches the Specto web server on the configured address and port.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println("server: not yet implemented")
-		return nil
+		cfg := config.Load()
+		logger := slog.Default()
+
+		srv := server.New(cfg, logger)
+		return srv.Run()
 	},
 }
 
