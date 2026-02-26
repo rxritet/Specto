@@ -10,15 +10,23 @@ type Config struct {
 	Host     string // SPECTO_HOST, default "0.0.0.0"
 	Port     string // SPECTO_PORT, default "8080"
 	LogLevel string // SPECTO_LOG_LEVEL, default "info"
+
+	// Database
+	DBProvider string // SPECTO_DB_PROVIDER: "postgres" | "bolt", default "bolt"
+	DBDsn      string // SPECTO_DB_DSN (postgres connection string)
+	DBPath     string // SPECTO_DB_PATH (bolt file path), default "specto.db"
 }
 
 // Load reads configuration from environment variables.
 // Missing variables fall back to sensible defaults.
 func Load() *Config {
 	return &Config{
-		Host:     envOr("SPECTO_HOST", "0.0.0.0"),
-		Port:     envOr("SPECTO_PORT", "8080"),
-		LogLevel: envOr("SPECTO_LOG_LEVEL", "info"),
+		Host:       envOr("SPECTO_HOST", "0.0.0.0"),
+		Port:       envOr("SPECTO_PORT", "8080"),
+		LogLevel:   envOr("SPECTO_LOG_LEVEL", "info"),
+		DBProvider: envOr("SPECTO_DB_PROVIDER", "bolt"),
+		DBDsn:      envOr("SPECTO_DB_DSN", ""),
+		DBPath:     envOr("SPECTO_DB_PATH", "specto.db"),
 	}
 }
 
