@@ -13,10 +13,13 @@ import (
 // binary name derived from project.
 const binName = "specto"
 
+// cmdPath is the import path for the main CLI package.
+const cmdPath = "./cmd/specto"
+
 // Dev runs the Specto server in development mode.
 func Dev() error {
 	fmt.Println("▶ Starting dev server…")
-	return run("go", "run", "./cmd/specto", "server")
+	return run("go", "run", cmdPath, "server")
 }
 
 // Prod builds an optimised, stripped production binary into ./bin/.
@@ -35,7 +38,7 @@ func Prod() error {
 		"-ldflags", "-s -w",
 		"-trimpath",
 		"-o", output,
-		"./cmd/specto",
+		cmdPath,
 	)
 }
 
@@ -48,7 +51,7 @@ func Test() error {
 // Seed invokes the specto seed command (must be built first or use go run).
 func Seed() error {
 	fmt.Println("▶ Running seed…")
-	return run("go", "run", "./cmd/specto", "seed")
+	return run("go", "run", cmdPath, "seed")
 }
 
 // run executes a command, forwarding stdout/stderr to the terminal.
