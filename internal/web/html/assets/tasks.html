@@ -1,0 +1,30 @@
+{{define "title"}}Tasks — Specto{{end}}
+
+{{define "content"}}
+<section class="tasks">
+    <h1>Tasks</h1>
+
+    {{if .Stats}}
+    <div class="stats">
+        <span>Total: {{.Stats.Total}}</span>
+        <span class="badge-todo">To Do: {{.Stats.TodoCount}} ({{.Stats.TodoPctFmt}})</span>
+        <span class="badge-inprogress">In Progress: {{.Stats.InProgCount}} ({{.Stats.InProgPctFmt}})</span>
+        <span class="badge-done">Done: {{.Stats.DoneCount}} ({{.Stats.DonePctFmt}})</span>
+    </div>
+    {{end}}
+
+    {{if .Tasks}}
+    <ul class="task-list">
+        {{range .Tasks}}
+        <li class="task-item {{.StatusClass}}">
+            <span class="task-title{{if .IsDone}} task-done{{end}}">{{.Title}}</span>
+            <span class="task-badge {{.StatusClass}}">{{.StatusLabel}}</span>
+            <span class="task-meta">{{.CreatedAgo}}</span>
+        </li>
+        {{end}}
+    </ul>
+    {{else}}
+    <p>No tasks yet.</p>
+    {{end}}
+</section>
+{{end}}
