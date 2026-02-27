@@ -1,0 +1,61 @@
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - unused
+    - ineffassign
+    - gosimple
+    - goconst
+    - gocyclo
+    - misspell
+    - unconvert
+    - unparam
+    - prealloc
+    - nolintlint
+    - bodyclose
+    - exportloopref
+    - durationcheck
+    - nilerr
+    - whitespace
+    - errname
+    - forcetypeassert
+    - tparallel
+
+linters-settings:
+  gocyclo:
+    min-complexity: 15
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+  misspell:
+    locale: US
+  errcheck:
+    check-type-assertions: true
+    check-blank: false
+  govet:
+    enable-all: true
+  nolintlint:
+    require-explanation: true
+    require-specific: true
+
+issues:
+  exclude-dirs:
+    - bin
+    - vendor
+  exclude-rules:
+    # Test files can have longer functions and magic numbers.
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - goconst
+        - unparam
+    # Assembly stubs have no Go body.
+    - path: _amd64\.go
+      linters:
+        - unused
+  max-issues-per-linter: 50
+  max-same-issues: 5
