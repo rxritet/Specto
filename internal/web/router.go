@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+
+	"github.com/rxritet/Specto/internal/service"
 )
 
 // Router holds references shared by all HTTP handlers and exposes a
@@ -11,14 +13,16 @@ import (
 type Router struct {
 	Mux    *http.ServeMux
 	Logger *slog.Logger
+	Tasks  *service.TaskService
 }
 
 // NewRouter creates the application ServeMux, registers all routes using
 // Go 1.22+ pattern matching, and wraps the mux with the middleware stack.
-func NewRouter(logger *slog.Logger) http.Handler {
+func NewRouter(logger *slog.Logger, tasks *service.TaskService) http.Handler {
 	r := &Router{
 		Mux:    http.NewServeMux(),
 		Logger: logger,
+		Tasks:  tasks,
 	}
 
 	r.routes()
@@ -39,13 +43,13 @@ func (rt *Router) routes() {
 	// Health-check — always available.
 	rt.Mux.HandleFunc("GET /health", rt.handleHealth)
 
-	// TODO: future task/user handlers will be registered here.
-	// Example:
-	//   rt.Mux.HandleFunc("GET /tasks",       rt.handleTaskList)
-	//   rt.Mux.HandleFunc("POST /tasks",      rt.handleTaskCreate)
-	//   rt.Mux.HandleFunc("GET /tasks/{id}",  rt.handleTaskGet)
-	//   rt.Mux.HandleFunc("PUT /tasks/{id}",  rt.handleTaskUpdate)
-	//   rt.Mux.HandleFunc("DELETE /tasks/{id}", rt.handleTaskDelete)
+	// Task CRUD.
+	rt.Mux.HandleFunc("GET /tasks", rt.handleTaskList)
+	rt.Mux.HandleFunc("POST /tasks", rt.handleTaskCreate)
+	rt.Mux.HandleFunc("GET /tasks/stats", rt.handleTaskStats)
+	rt.Mux.HandleFunc("GET /tasks/{id}", rt.handleTaskGet)
+	rt.Mux.HandleFunc("PUT /tasks/{id}", rt.handleTaskUpdate)
+	rt.Mux.HandleFunc("DELETE /tasks/{id}", rt.handleTaskDelete)
 }
 
 // ---------- Handlers ----------

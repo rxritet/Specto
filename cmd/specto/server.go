@@ -7,7 +7,9 @@ import (
 
 	"github.com/rxritet/Specto/internal/config"
 	"github.com/rxritet/Specto/internal/database"
+	"github.com/rxritet/Specto/internal/domain"
 	"github.com/rxritet/Specto/internal/server"
+	"github.com/rxritet/Specto/internal/service"
 	"github.com/spf13/cobra"
 )
 
@@ -19,8 +21,13 @@ var serverCmd = &cobra.Command{
 		cfg := config.Load()
 		logger := slog.Default()
 
-		// Run SQL migrations for PostgreSQL provider.
-		if cfg.DBProvider == "postgres" {
+		var (
+			userRepo domain.UserRepository
+			taskRepo domain.TaskRepository
+		)
+
+		switch cfg.DBProvider {
+		case "postgres":
 			db, err := database.OpenPostgres(cfg.DBDsn, logger)
 			if err != nil {
 				return fmt.Errorf("open postgres: %w", err)
@@ -30,9 +37,27 @@ var serverCmd = &cobra.Command{
 			if err := database.Migrate(context.Background(), db, logger); err != nil {
 				return fmt.Errorf("migrate: %w", err)
 			}
+
+			userRepo = database.NewPgUserRepo(db)
+			taskRepo = database.NewPgTaskRepo(db)
+
+		case "bolt":
+			bdb, err := database.OpenBolt(cfg.DBPath, logger)
+			if err != nil {
+				return fmt.Errorf("open bolt: %w", err)
+			}
+			defer bdb.Close()
+
+			userRepo = database.NewBoltUserRepo(bdb)
+			taskRepo = database.NewBoltTaskRepo(bdb)
+
+		default:
+			return fmt.Errorf("unknown db provider: %s", cfg.DBProvider)
 		}
 
-		srv := server.New(cfg, logger)
+		taskSvc := service.NewTaskService(taskRepo, userRepo, logger)
+
+		srv := server.New(cfg, logger, taskSvc)
 		return srv.Run()
 	},
 }

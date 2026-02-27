@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/rxritet/Specto/internal/config"
+	"github.com/rxritet/Specto/internal/service"
 	"github.com/rxritet/Specto/internal/web"
 )
 
@@ -17,13 +18,13 @@ type Server struct {
 }
 
 // New creates a Server configured with the given Config and logger.
-func New(cfg *config.Config, logger *slog.Logger) *Server {
+func New(cfg *config.Config, logger *slog.Logger, tasks *service.TaskService) *Server {
 	s := &Server{
 		cfg:    cfg,
 		logger: logger,
 	}
 
-	handler := web.NewRouter(logger)
+	handler := web.NewRouter(logger, tasks)
 
 	s.http = &http.Server{
 		Addr:         cfg.Addr(),
