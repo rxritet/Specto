@@ -11,7 +11,7 @@ import (
 	"sync"
 )
 
-//go:embed assets
+//go:embed assets/*.html
 var embeddedFS embed.FS
 
 // Engine parses and executes html/template templates.
