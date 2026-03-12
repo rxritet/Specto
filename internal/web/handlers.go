@@ -199,5 +199,3 @@ func queryInt64(r *http.Request, name string) (int64, error) {
 	}
 	return strconv.ParseInt(raw, 10, 64)
 }
-
-
