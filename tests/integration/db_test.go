@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package integration
 
 import (
@@ -22,15 +19,27 @@ import (
 )
 
 const (
-	pgUser = "specto"
-	pgPass = "specto"
-	pgDB   = "specto_test"
+	pgUser            = "specto"
+	pgPass            = "specto"
+	pgDB              = "specto_test"
+	aliceEmail        = "alice@example.com"
+	bobEmail          = "bob@example.com"
+	runIntegrationEnv = "SPECTO_RUN_INTEGRATION"
 )
+
+func requireIntegrationEnabled(t *testing.T) {
+	t.Helper()
+	if os.Getenv(runIntegrationEnv) == "1" {
+		return
+	}
+	t.Skipf("set %s=1 to run integration tests", runIntegrationEnv)
+}
 
 // startPostgres spins up an ephemeral PostgreSQL container and returns
 // the connected *sql.DB. The container is terminated when the test ends.
 func startPostgres(t *testing.T) *sql.DB {
 	t.Helper()
+	requireIntegrationEnabled(t)
 	ctx := context.Background()
 
 	// Resolve the project root so we can mount migration + fixture files.
@@ -99,7 +108,7 @@ func projectRoot(t *testing.T) string {
 
 // ---------- User Repository Tests ----------
 
-func TestPgUserRepo_CreateAndGetByID(t *testing.T) {
+func TestPgUserRepoCreateAndGetByID(t *testing.T) {
 	db := startPostgres(t)
 	repo := database.NewPgUserRepo(db)
 
@@ -109,14 +118,14 @@ func TestPgUserRepo_CreateAndGetByID(t *testing.T) {
 		Password: "$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012",
 	}
 
-	if err := repo.Create(user); err != nil {
+	if err := repo.Create(context.Background(), user); err != nil {
 		t.Fatalf("create user: %v", err)
 	}
 	if user.ID == 0 {
 		t.Fatal("expected user ID to be assigned")
 	}
 
-	got, err := repo.GetByID(user.ID)
+	got, err := repo.GetByID(context.Background(), user.ID)
 	if err != nil {
 		t.Fatalf("get user by id: %v", err)
 	}
@@ -128,12 +137,12 @@ func TestPgUserRepo_CreateAndGetByID(t *testing.T) {
 	}
 }
 
-func TestPgUserRepo_GetByEmail_Fixtures(t *testing.T) {
+func TestPgUserRepoGetByEmailFixtures(t *testing.T) {
 	db := startPostgres(t)
 	repo := database.NewPgUserRepo(db)
 
 	// fixtures.sql inserts alice@example.com.
-	alice, err := repo.GetByEmail("alice@example.com")
+	alice, err := repo.GetByEmail(context.Background(), aliceEmail)
 	if err != nil {
 		t.Fatalf("get alice: %v", err)
 	}
@@ -142,23 +151,23 @@ func TestPgUserRepo_GetByEmail_Fixtures(t *testing.T) {
 	}
 }
 
-func TestPgUserRepo_Update(t *testing.T) {
+func TestPgUserRepoUpdate(t *testing.T) {
 	db := startPostgres(t)
 	repo := database.NewPgUserRepo(db)
 
-	alice, _ := repo.GetByEmail("alice@example.com")
+	alice, _ := repo.GetByEmail(context.Background(), aliceEmail)
 	alice.Name = "Alice Updated"
-	if err := repo.Update(alice); err != nil {
+	if err := repo.Update(context.Background(), alice); err != nil {
 		t.Fatalf("update user: %v", err)
 	}
 
-	got, _ := repo.GetByID(alice.ID)
+	got, _ := repo.GetByID(context.Background(), alice.ID)
 	if got.Name != "Alice Updated" {
 		t.Fatalf("expected 'Alice Updated', got %q", got.Name)
 	}
 }
 
-func TestPgUserRepo_Delete(t *testing.T) {
+func TestPgUserRepoDelete(t *testing.T) {
 	db := startPostgres(t)
 	repo := database.NewPgUserRepo(db)
 
@@ -167,13 +176,13 @@ func TestPgUserRepo_Delete(t *testing.T) {
 		Name:     "DeleteMe",
 		Password: "hashed",
 	}
-	_ = repo.Create(user)
+	_ = repo.Create(context.Background(), user)
 
-	if err := repo.Delete(user.ID); err != nil {
+	if err := repo.Delete(context.Background(), user.ID); err != nil {
 		t.Fatalf("delete user: %v", err)
 	}
 
-	_, err := repo.GetByID(user.ID)
+	_, err := repo.GetByID(context.Background(), user.ID)
 	if err == nil {
 		t.Fatal("expected error after delete, got nil")
 	}
@@ -181,12 +190,12 @@ func TestPgUserRepo_Delete(t *testing.T) {
 
 // ---------- Task Repository Tests ----------
 
-func TestPgTaskRepo_CreateAndGetByID(t *testing.T) {
+func TestPgTaskRepoCreateAndGetByID(t *testing.T) {
 	db := startPostgres(t)
 	taskRepo := database.NewPgTaskRepo(db)
 	userRepo := database.NewPgUserRepo(db)
 
-	alice, _ := userRepo.GetByEmail("alice@example.com")
+	alice, _ := userRepo.GetByEmail(context.Background(), aliceEmail)
 
 	task := &domain.Task{
 		UserID:      alice.ID,
@@ -195,14 +204,14 @@ func TestPgTaskRepo_CreateAndGetByID(t *testing.T) {
 		Status:      domain.TaskStatusTodo,
 	}
 
-	if err := taskRepo.Create(task); err != nil {
+	if err := taskRepo.Create(context.Background(), task); err != nil {
 		t.Fatalf("create task: %v", err)
 	}
 	if task.ID == 0 {
 		t.Fatal("expected task ID to be assigned")
 	}
 
-	got, err := taskRepo.GetByID(task.ID)
+	got, err := taskRepo.GetByID(context.Background(), task.ID)
 	if err != nil {
 		t.Fatalf("get task: %v", err)
 	}
@@ -214,15 +223,15 @@ func TestPgTaskRepo_CreateAndGetByID(t *testing.T) {
 	}
 }
 
-func TestPgTaskRepo_ListByUser_Fixtures(t *testing.T) {
+func TestPgTaskRepoListByUserFixtures(t *testing.T) {
 	db := startPostgres(t)
 	taskRepo := database.NewPgTaskRepo(db)
 	userRepo := database.NewPgUserRepo(db)
 
-	alice, _ := userRepo.GetByEmail("alice@example.com")
+	alice, _ := userRepo.GetByEmail(context.Background(), aliceEmail)
 
 	// fixtures.sql inserts 2 tasks for alice.
-	tasks, err := taskRepo.ListByUser(alice.ID)
+	tasks, err := taskRepo.ListByUser(context.Background(), alice.ID)
 	if err != nil {
 		t.Fatalf("list tasks: %v", err)
 	}
@@ -231,35 +240,35 @@ func TestPgTaskRepo_ListByUser_Fixtures(t *testing.T) {
 	}
 }
 
-func TestPgTaskRepo_Update(t *testing.T) {
+func TestPgTaskRepoUpdate(t *testing.T) {
 	db := startPostgres(t)
 	taskRepo := database.NewPgTaskRepo(db)
 	userRepo := database.NewPgUserRepo(db)
 
-	bob, _ := userRepo.GetByEmail("bob@example.com")
-	tasks, _ := taskRepo.ListByUser(bob.ID)
+	bob, _ := userRepo.GetByEmail(context.Background(), bobEmail)
+	tasks, _ := taskRepo.ListByUser(context.Background(), bob.ID)
 	if len(tasks) == 0 {
 		t.Fatal("expected fixture tasks for bob")
 	}
 
 	task := tasks[0]
 	task.Status = domain.TaskStatusDone
-	if err := taskRepo.Update(&task); err != nil {
+	if err := taskRepo.Update(context.Background(), &task); err != nil {
 		t.Fatalf("update task: %v", err)
 	}
 
-	got, _ := taskRepo.GetByID(task.ID)
+	got, _ := taskRepo.GetByID(context.Background(), task.ID)
 	if got.Status != domain.TaskStatusDone {
 		t.Fatalf("expected status done, got %q", got.Status)
 	}
 }
 
-func TestPgTaskRepo_Delete(t *testing.T) {
+func TestPgTaskRepoDelete(t *testing.T) {
 	db := startPostgres(t)
 	taskRepo := database.NewPgTaskRepo(db)
 	userRepo := database.NewPgUserRepo(db)
 
-	alice, _ := userRepo.GetByEmail("alice@example.com")
+	alice, _ := userRepo.GetByEmail(context.Background(), aliceEmail)
 
 	task := &domain.Task{
 		UserID:      alice.ID,
@@ -267,13 +276,13 @@ func TestPgTaskRepo_Delete(t *testing.T) {
 		Description: "",
 		Status:      domain.TaskStatusTodo,
 	}
-	_ = taskRepo.Create(task)
+	_ = taskRepo.Create(context.Background(), task)
 
-	if err := taskRepo.Delete(task.ID); err != nil {
+	if err := taskRepo.Delete(context.Background(), task.ID); err != nil {
 		t.Fatalf("delete task: %v", err)
 	}
 
-	_, err := taskRepo.GetByID(task.ID)
+	_, err := taskRepo.GetByID(context.Background(), task.ID)
 	if err == nil {
 		t.Fatal("expected error after delete, got nil")
 	}
@@ -281,7 +290,7 @@ func TestPgTaskRepo_Delete(t *testing.T) {
 
 // ---------- Migration Test ----------
 
-func TestMigrate_Idempotent(t *testing.T) {
+func TestMigrateIdempotent(t *testing.T) {
 	db := startPostgres(t)
 	ctx := context.Background()
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
@@ -294,7 +303,7 @@ func TestMigrate_Idempotent(t *testing.T) {
 
 // ---------- Seed Test ----------
 
-func TestSeed_Idempotent(t *testing.T) {
+func TestSeedIdempotent(t *testing.T) {
 	db := startPostgres(t)
 	ctx := context.Background()
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))

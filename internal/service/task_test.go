@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -8,6 +9,16 @@ import (
 	"testing"
 
 	"github.com/rxritet/Specto/internal/domain"
+)
+
+var testCtx = context.Background()
+
+const (
+	errExpectedNoError     = "expected no error, got %v"
+	errExpectedNotFound    = "expected *NotFoundError, got %T: %v"
+	errSetup               = "setup: %v"
+	errExpectedMissingTask = "expected error for missing task"
+	titleFindMe            = "Find me"
 )
 
 // ---------- In-memory mock repositories ----------
@@ -23,7 +34,7 @@ func newMemUserRepo() *memUserRepo {
 	return &memUserRepo{users: make(map[int64]*domain.User)}
 }
 
-func (r *memUserRepo) Create(u *domain.User) error {
+func (r *memUserRepo) Create(_ context.Context, u *domain.User) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.seq++
@@ -33,7 +44,7 @@ func (r *memUserRepo) Create(u *domain.User) error {
 	return nil
 }
 
-func (r *memUserRepo) GetByID(id int64) (*domain.User, error) {
+func (r *memUserRepo) GetByID(_ context.Context, id int64) (*domain.User, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	u, ok := r.users[id]
@@ -44,7 +55,7 @@ func (r *memUserRepo) GetByID(id int64) (*domain.User, error) {
 	return &clone, nil
 }
 
-func (r *memUserRepo) GetByEmail(email string) (*domain.User, error) {
+func (r *memUserRepo) GetByEmail(_ context.Context, email string) (*domain.User, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	for _, u := range r.users {
@@ -56,7 +67,7 @@ func (r *memUserRepo) GetByEmail(email string) (*domain.User, error) {
 	return nil, domain.NewNotFoundError("user", email)
 }
 
-func (r *memUserRepo) Update(u *domain.User) error {
+func (r *memUserRepo) Update(_ context.Context, u *domain.User) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if _, ok := r.users[u.ID]; !ok {
@@ -67,7 +78,7 @@ func (r *memUserRepo) Update(u *domain.User) error {
 	return nil
 }
 
-func (r *memUserRepo) Delete(id int64) error {
+func (r *memUserRepo) Delete(_ context.Context, id int64) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	delete(r.users, id)
@@ -85,7 +96,7 @@ func newMemTaskRepo() *memTaskRepo {
 	return &memTaskRepo{tasks: make(map[int64]*domain.Task)}
 }
 
-func (r *memTaskRepo) Create(t *domain.Task) error {
+func (r *memTaskRepo) Create(_ context.Context, t *domain.Task) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.seq++
@@ -95,7 +106,7 @@ func (r *memTaskRepo) Create(t *domain.Task) error {
 	return nil
 }
 
-func (r *memTaskRepo) GetByID(id int64) (*domain.Task, error) {
+func (r *memTaskRepo) GetByID(_ context.Context, id int64) (*domain.Task, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	t, ok := r.tasks[id]
@@ -106,7 +117,7 @@ func (r *memTaskRepo) GetByID(id int64) (*domain.Task, error) {
 	return &clone, nil
 }
 
-func (r *memTaskRepo) ListByUser(userID int64) ([]domain.Task, error) {
+func (r *memTaskRepo) ListByUser(_ context.Context, userID int64) ([]domain.Task, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	var result []domain.Task
@@ -118,7 +129,7 @@ func (r *memTaskRepo) ListByUser(userID int64) ([]domain.Task, error) {
 	return result, nil
 }
 
-func (r *memTaskRepo) Update(t *domain.Task) error {
+func (r *memTaskRepo) Update(_ context.Context, t *domain.Task) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if _, ok := r.tasks[t.ID]; !ok {
@@ -129,7 +140,7 @@ func (r *memTaskRepo) Update(t *domain.Task) error {
 	return nil
 }
 
-func (r *memTaskRepo) Delete(id int64) error {
+func (r *memTaskRepo) Delete(_ context.Context, id int64) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if _, ok := r.tasks[id]; !ok {
@@ -151,7 +162,7 @@ func newTestTaskService(t *testing.T) (*TaskService, *memUserRepo, *memTaskRepo)
 	logger := slog.Default()
 
 	// Seed a user so task creation has a valid owner.
-	_ = users.Create(&domain.User{
+	_ = users.Create(testCtx, &domain.User{
 		Email:    "test@example.com",
 		Name:     "Test User",
 		Password: "hashed",
@@ -163,7 +174,7 @@ func newTestTaskService(t *testing.T) (*TaskService, *memUserRepo, *memTaskRepo)
 
 // ---------- Tests: Create ----------
 
-func TestTaskService_Create_Success(t *testing.T) {
+func TestTaskServiceCreateSuccess(t *testing.T) {
 	svc, _, _ := newTestTaskService(t)
 
 	task := &domain.Task{
@@ -172,8 +183,8 @@ func TestTaskService_Create_Success(t *testing.T) {
 		Description: "Cover CRUD methods",
 	}
 
-	if err := svc.Create(task); err != nil {
-		t.Fatalf("expected no error, got %v", err)
+	if err := svc.Create(testCtx, task); err != nil {
+		t.Fatalf(errExpectedNoError, err)
 	}
 
 	if task.ID == 0 {
@@ -184,7 +195,7 @@ func TestTaskService_Create_Success(t *testing.T) {
 	}
 }
 
-func TestTaskService_Create_DefaultStatus(t *testing.T) {
+func TestTaskServiceCreateDefaultStatus(t *testing.T) {
 	svc, _, _ := newTestTaskService(t)
 
 	task := &domain.Task{
@@ -192,7 +203,7 @@ func TestTaskService_Create_DefaultStatus(t *testing.T) {
 		Title:  "No explicit status",
 	}
 
-	if err := svc.Create(task); err != nil {
+	if err := svc.Create(testCtx, task); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if task.Status != domain.TaskStatusTodo {
@@ -200,12 +211,12 @@ func TestTaskService_Create_DefaultStatus(t *testing.T) {
 	}
 }
 
-func TestTaskService_Create_ValidationError_EmptyTitle(t *testing.T) {
+func TestTaskServiceCreateValidationErrorEmptyTitle(t *testing.T) {
 	svc, _, _ := newTestTaskService(t)
 
 	task := &domain.Task{UserID: 1, Title: ""}
 
-	err := svc.Create(task)
+	err := svc.Create(testCtx, task)
 	if err == nil {
 		t.Fatal("expected validation error, got nil")
 	}
@@ -215,7 +226,7 @@ func TestTaskService_Create_ValidationError_EmptyTitle(t *testing.T) {
 	}
 }
 
-func TestTaskService_Create_ValidationError_InvalidStatus(t *testing.T) {
+func TestTaskServiceCreateValidationErrorInvalidStatus(t *testing.T) {
 	svc, _, _ := newTestTaskService(t)
 
 	task := &domain.Task{
@@ -224,7 +235,7 @@ func TestTaskService_Create_ValidationError_InvalidStatus(t *testing.T) {
 		Status: "cancelled",
 	}
 
-	err := svc.Create(task)
+	err := svc.Create(testCtx, task)
 	if err == nil {
 		t.Fatal("expected validation error for invalid status")
 	}
@@ -238,7 +249,7 @@ func TestTaskService_Create_ValidationError_InvalidStatus(t *testing.T) {
 	}
 }
 
-func TestTaskService_Create_NotFoundError_NoUser(t *testing.T) {
+func TestTaskServiceCreateNotFoundErrorNoUser(t *testing.T) {
 	svc, _, _ := newTestTaskService(t)
 
 	task := &domain.Task{
@@ -246,46 +257,46 @@ func TestTaskService_Create_NotFoundError_NoUser(t *testing.T) {
 		Title:  "Orphan task",
 	}
 
-	err := svc.Create(task)
+	err := svc.Create(testCtx, task)
 	if err == nil {
 		t.Fatal("expected error for non-existent user")
 	}
 
 	if _, ok := errors.AsType[*domain.NotFoundError](err); !ok {
-		t.Fatalf("expected *NotFoundError, got %T: %v", err, err)
+		t.Fatalf(errExpectedNotFound, err, err)
 	}
 }
 
 // ---------- Tests: GetByID ----------
 
-func TestTaskService_GetByID_Success(t *testing.T) {
+func TestTaskServiceGetByIDSuccess(t *testing.T) {
 	svc, _, _ := newTestTaskService(t)
 
-	created := &domain.Task{UserID: 1, Title: "Find me"}
-	if err := svc.Create(created); err != nil {
-		t.Fatalf("setup: %v", err)
+	created := &domain.Task{UserID: 1, Title: titleFindMe}
+	if err := svc.Create(testCtx, created); err != nil {
+		t.Fatalf(errSetup, err)
 	}
 
-	got, err := svc.GetByID(created.ID)
+	got, err := svc.GetByID(testCtx, created.ID)
 	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
+		t.Fatalf(errExpectedNoError, err)
 	}
-	if got.Title != "Find me" {
-		t.Fatalf("expected title %q, got %q", "Find me", got.Title)
+	if got.Title != titleFindMe {
+		t.Fatalf("expected title %q, got %q", titleFindMe, got.Title)
 	}
 }
 
-func TestTaskService_GetByID_NotFound(t *testing.T) {
+func TestTaskServiceGetByIDNotFound(t *testing.T) {
 	svc, _, _ := newTestTaskService(t)
 
-	_, err := svc.GetByID(42)
+	_, err := svc.GetByID(testCtx, 42)
 	if err == nil {
-		t.Fatal("expected error for missing task")
+		t.Fatal(errExpectedMissingTask)
 	}
 
 	nf, ok := errors.AsType[*domain.NotFoundError](err)
 	if !ok {
-		t.Fatalf("expected *NotFoundError, got %T: %v", err, err)
+		t.Fatalf(errExpectedNotFound, err, err)
 	}
 	if nf.Entity != "task" {
 		t.Fatalf("expected entity 'task', got %q", nf.Entity)
@@ -294,54 +305,54 @@ func TestTaskService_GetByID_NotFound(t *testing.T) {
 
 // ---------- Tests: ListByUser ----------
 
-func TestTaskService_ListByUser_Success(t *testing.T) {
+func TestTaskServiceListByUserSuccess(t *testing.T) {
 	svc, _, _ := newTestTaskService(t)
 
 	for _, title := range []string{"A", "B", "C"} {
-		if err := svc.Create(&domain.Task{UserID: 1, Title: title}); err != nil {
-			t.Fatalf("setup: %v", err)
+		if err := svc.Create(testCtx, &domain.Task{UserID: 1, Title: title}); err != nil {
+			t.Fatalf(errSetup, err)
 		}
 	}
 
-	tasks, err := svc.ListByUser(1)
+	tasks, err := svc.ListByUser(testCtx, 1)
 	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
+		t.Fatalf(errExpectedNoError, err)
 	}
 	if len(tasks) != 3 {
 		t.Fatalf("expected 3 tasks, got %d", len(tasks))
 	}
 }
 
-func TestTaskService_ListByUser_NotFoundUser(t *testing.T) {
+func TestTaskServiceListByUserNotFoundUser(t *testing.T) {
 	svc, _, _ := newTestTaskService(t)
 
-	_, err := svc.ListByUser(999)
+	_, err := svc.ListByUser(testCtx, 999)
 	if err == nil {
 		t.Fatal("expected error for non-existent user")
 	}
 
 	if _, ok := errors.AsType[*domain.NotFoundError](err); !ok {
-		t.Fatalf("expected *NotFoundError, got %T: %v", err, err)
+		t.Fatalf(errExpectedNotFound, err, err)
 	}
 }
 
 // ---------- Tests: Update ----------
 
-func TestTaskService_Update_Success(t *testing.T) {
+func TestTaskServiceUpdateSuccess(t *testing.T) {
 	svc, _, _ := newTestTaskService(t)
 
 	task := &domain.Task{UserID: 1, Title: "Original"}
-	if err := svc.Create(task); err != nil {
-		t.Fatalf("setup: %v", err)
+	if err := svc.Create(testCtx, task); err != nil {
+		t.Fatalf(errSetup, err)
 	}
 
 	task.Title = "Updated"
 	task.Status = domain.TaskStatusDone
-	if err := svc.Update(task); err != nil {
-		t.Fatalf("expected no error, got %v", err)
+	if err := svc.Update(testCtx, task); err != nil {
+		t.Fatalf(errExpectedNoError, err)
 	}
 
-	got, _ := svc.GetByID(task.ID)
+	got, _ := svc.GetByID(testCtx, task.ID)
 	if got.Title != "Updated" {
 		t.Fatalf("expected title %q, got %q", "Updated", got.Title)
 	}
@@ -350,58 +361,58 @@ func TestTaskService_Update_Success(t *testing.T) {
 	}
 }
 
-func TestTaskService_Update_NotFound(t *testing.T) {
+func TestTaskServiceUpdateNotFound(t *testing.T) {
 	svc, _, _ := newTestTaskService(t)
 
-	err := svc.Update(&domain.Task{ID: 999, UserID: 1, Title: "Ghost", Status: domain.TaskStatusTodo})
+	err := svc.Update(testCtx, &domain.Task{ID: 999, UserID: 1, Title: "Ghost", Status: domain.TaskStatusTodo})
 	if err == nil {
-		t.Fatal("expected error for missing task")
+		t.Fatal(errExpectedMissingTask)
 	}
 
 	if _, ok := errors.AsType[*domain.NotFoundError](err); !ok {
-		t.Fatalf("expected *NotFoundError, got %T: %v", err, err)
+		t.Fatalf(errExpectedNotFound, err, err)
 	}
 }
 
 // ---------- Tests: Delete ----------
 
-func TestTaskService_Delete_Success(t *testing.T) {
+func TestTaskServiceDeleteSuccess(t *testing.T) {
 	svc, _, _ := newTestTaskService(t)
 
 	task := &domain.Task{UserID: 1, Title: "Delete me"}
-	if err := svc.Create(task); err != nil {
-		t.Fatalf("setup: %v", err)
+	if err := svc.Create(testCtx, task); err != nil {
+		t.Fatalf(errSetup, err)
 	}
 
-	if err := svc.Delete(task.ID); err != nil {
-		t.Fatalf("expected no error, got %v", err)
+	if err := svc.Delete(testCtx, task.ID); err != nil {
+		t.Fatalf(errExpectedNoError, err)
 	}
 
-	_, err := svc.GetByID(task.ID)
+	_, err := svc.GetByID(testCtx, task.ID)
 	if _, ok := errors.AsType[*domain.NotFoundError](err); !ok {
 		t.Fatalf("expected *NotFoundError after delete, got %T: %v", err, err)
 	}
 }
 
-func TestTaskService_Delete_NotFound(t *testing.T) {
+func TestTaskServiceDeleteNotFound(t *testing.T) {
 	svc, _, _ := newTestTaskService(t)
 
-	err := svc.Delete(999)
+	err := svc.Delete(testCtx, 999)
 	if err == nil {
-		t.Fatal("expected error for missing task")
+		t.Fatal(errExpectedMissingTask)
 	}
 
 	if _, ok := errors.AsType[*domain.NotFoundError](err); !ok {
-		t.Fatalf("expected *NotFoundError, got %T: %v", err, err)
+		t.Fatalf(errExpectedNotFound, err, err)
 	}
 }
 
 // ---------- Tests: StatsByUser (SIMD / generic) ----------
 
-func TestTaskService_StatsByUser(t *testing.T) {
+func TestTaskServiceStatsByUser(t *testing.T) {
 	svc, _, _ := newTestTaskService(t)
 
-	// 2 todo, 1 in_progress, 1 done
+	// Expected status mix: 2 pending, 1 in_progress, 1 done.
 	for _, tt := range []struct {
 		title  string
 		status domain.TaskStatus
@@ -411,14 +422,14 @@ func TestTaskService_StatsByUser(t *testing.T) {
 		{"T3", domain.TaskStatusInProgress},
 		{"T4", domain.TaskStatusDone},
 	} {
-		if err := svc.Create(&domain.Task{UserID: 1, Title: tt.title, Status: tt.status}); err != nil {
-			t.Fatalf("setup: %v", err)
+		if err := svc.Create(testCtx, &domain.Task{UserID: 1, Title: tt.title, Status: tt.status}); err != nil {
+			t.Fatalf(errSetup, err)
 		}
 	}
 
-	stats, err := svc.StatsByUser(1)
+	stats, err := svc.StatsByUser(testCtx, 1)
 	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
+		t.Fatalf(errExpectedNoError, err)
 	}
 
 	if stats.Total != 4 {
