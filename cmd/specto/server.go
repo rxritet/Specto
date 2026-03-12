@@ -55,9 +55,10 @@ var serverCmd = &cobra.Command{
 			return fmt.Errorf("unknown db provider: %s", cfg.DBProvider)
 		}
 
+		userSvc := service.NewUserService(userRepo, logger)
 		taskSvc := service.NewTaskService(taskRepo, userRepo, logger)
 
-		srv := server.New(cfg, logger, taskSvc)
+		srv := server.New(cfg, logger, taskSvc, userSvc)
 		return srv.Run()
 	},
 }
