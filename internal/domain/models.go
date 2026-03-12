@@ -1,6 +1,9 @@
 package domain
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 // ---------- User ----------
 
@@ -40,18 +43,18 @@ type Task struct {
 
 // UserRepository describes persistence operations for users.
 type UserRepository interface {
-	Create(user *User) error
-	GetByID(id int64) (*User, error)
-	GetByEmail(email string) (*User, error)
-	Update(user *User) error
-	Delete(id int64) error
+	Create(ctx context.Context, user *User) error
+	GetByID(ctx context.Context, id int64) (*User, error)
+	GetByEmail(ctx context.Context, email string) (*User, error)
+	Update(ctx context.Context, user *User) error
+	Delete(ctx context.Context, id int64) error
 }
 
 // TaskRepository describes persistence operations for tasks.
 type TaskRepository interface {
-	Create(task *Task) error
-	GetByID(id int64) (*Task, error)
-	ListByUser(userID int64) ([]Task, error)
-	Update(task *Task) error
-	Delete(id int64) error
+	Create(ctx context.Context, task *Task) error
+	GetByID(ctx context.Context, id int64) (*Task, error)
+	ListByUser(ctx context.Context, userID int64) ([]Task, error)
+	Update(ctx context.Context, task *Task) error
+	Delete(ctx context.Context, id int64) error
 }

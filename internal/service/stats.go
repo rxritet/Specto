@@ -1,6 +1,10 @@
 package service
 
-import "github.com/rxritet/Specto/internal/domain"
+import (
+	"context"
+
+	"github.com/rxritet/Specto/internal/domain"
+)
 
 // TaskStats holds aggregate counts and percentages for a set of tasks.
 type TaskStats struct {
@@ -16,8 +20,8 @@ type TaskStats struct {
 // StatsByUser computes task statistics for a given user.
 // The heavy counting loop is SIMD-accelerated on amd64 (SSE2 + POPCNT)
 // and falls back to plain Go on other architectures.
-func (s *TaskService) StatsByUser(userID int64) (*TaskStats, error) {
-	tasks, err := s.ListByUser(userID)
+func (s *TaskService) StatsByUser(ctx context.Context, userID int64) (*TaskStats, error) {
+	tasks, err := s.ListByUser(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +54,7 @@ func computeStats(tasks []domain.Task) *TaskStats {
 
 // encodeStatuses maps each task's status to a single byte:
 //
-//	0 = todo, 1 = in_progress, 2 = done.
+//	0 = pending, 1 = in_progress, 2 = done.
 //
 // The resulting dense byte slice is the input for the SIMD counting path.
 func encodeStatuses(tasks []domain.Task) []byte {

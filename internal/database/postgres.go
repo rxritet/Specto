@@ -48,8 +48,7 @@ func NewPgUserRepo(db *sql.DB) *PgUserRepo {
 	return &PgUserRepo{db: db}
 }
 
-func (r *PgUserRepo) Create(user *domain.User) error {
-	ctx := context.Background()
+func (r *PgUserRepo) Create(ctx context.Context, user *domain.User) error {
 	q := Conn(ctx, r.db)
 
 	return q.QueryRowContext(ctx,
@@ -60,8 +59,7 @@ func (r *PgUserRepo) Create(user *domain.User) error {
 	).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt)
 }
 
-func (r *PgUserRepo) GetByID(id int64) (*domain.User, error) {
-	ctx := context.Background()
+func (r *PgUserRepo) GetByID(ctx context.Context, id int64) (*domain.User, error) {
 	q := Conn(ctx, r.db)
 
 	u := &domain.User{}
@@ -75,8 +73,7 @@ func (r *PgUserRepo) GetByID(id int64) (*domain.User, error) {
 	return u, nil
 }
 
-func (r *PgUserRepo) GetByEmail(email string) (*domain.User, error) {
-	ctx := context.Background()
+func (r *PgUserRepo) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
 	q := Conn(ctx, r.db)
 
 	u := &domain.User{}
@@ -90,8 +87,7 @@ func (r *PgUserRepo) GetByEmail(email string) (*domain.User, error) {
 	return u, nil
 }
 
-func (r *PgUserRepo) Update(user *domain.User) error {
-	ctx := context.Background()
+func (r *PgUserRepo) Update(ctx context.Context, user *domain.User) error {
 	q := Conn(ctx, r.db)
 
 	_, err := q.ExecContext(ctx,
@@ -102,8 +98,7 @@ func (r *PgUserRepo) Update(user *domain.User) error {
 	return err
 }
 
-func (r *PgUserRepo) Delete(id int64) error {
-	ctx := context.Background()
+func (r *PgUserRepo) Delete(ctx context.Context, id int64) error {
 	q := Conn(ctx, r.db)
 
 	_, err := q.ExecContext(ctx, `DELETE FROM users WHERE id = $1`, id)
@@ -121,8 +116,7 @@ func NewPgTaskRepo(db *sql.DB) *PgTaskRepo {
 	return &PgTaskRepo{db: db}
 }
 
-func (r *PgTaskRepo) Create(task *domain.Task) error {
-	ctx := context.Background()
+func (r *PgTaskRepo) Create(ctx context.Context, task *domain.Task) error {
 	q := Conn(ctx, r.db)
 
 	return q.QueryRowContext(ctx,
@@ -133,8 +127,7 @@ func (r *PgTaskRepo) Create(task *domain.Task) error {
 	).Scan(&task.ID, &task.CreatedAt, &task.UpdatedAt)
 }
 
-func (r *PgTaskRepo) GetByID(id int64) (*domain.Task, error) {
-	ctx := context.Background()
+func (r *PgTaskRepo) GetByID(ctx context.Context, id int64) (*domain.Task, error) {
 	q := Conn(ctx, r.db)
 
 	t := &domain.Task{}
@@ -148,8 +141,7 @@ func (r *PgTaskRepo) GetByID(id int64) (*domain.Task, error) {
 	return t, nil
 }
 
-func (r *PgTaskRepo) ListByUser(userID int64) ([]domain.Task, error) {
-	ctx := context.Background()
+func (r *PgTaskRepo) ListByUser(ctx context.Context, userID int64) ([]domain.Task, error) {
 	q := Conn(ctx, r.db)
 
 	rows, err := q.QueryContext(ctx,
@@ -172,8 +164,7 @@ func (r *PgTaskRepo) ListByUser(userID int64) ([]domain.Task, error) {
 	return tasks, rows.Err()
 }
 
-func (r *PgTaskRepo) Update(task *domain.Task) error {
-	ctx := context.Background()
+func (r *PgTaskRepo) Update(ctx context.Context, task *domain.Task) error {
 	q := Conn(ctx, r.db)
 
 	_, err := q.ExecContext(ctx,
@@ -184,8 +175,7 @@ func (r *PgTaskRepo) Update(task *domain.Task) error {
 	return err
 }
 
-func (r *PgTaskRepo) Delete(id int64) error {
-	ctx := context.Background()
+func (r *PgTaskRepo) Delete(ctx context.Context, id int64) error {
 	q := Conn(ctx, r.db)
 
 	_, err := q.ExecContext(ctx, `DELETE FROM tasks WHERE id = $1`, id)

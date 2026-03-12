@@ -53,3 +53,19 @@ func (e *ConflictError) Error() string {
 func NewConflictError(entity, message string) *ConflictError {
 	return &ConflictError{Entity: entity, Message: message}
 }
+
+// ---------- Unauthorized ----------
+
+// UnauthorizedError indicates that authentication failed.
+type UnauthorizedError struct {
+	Message string
+}
+
+func (e *UnauthorizedError) Error() string {
+	return e.Message
+}
+
+// NewUnauthorizedError constructs an UnauthorizedError.
+func NewUnauthorizedError(message string) *UnauthorizedError {
+	return &UnauthorizedError{Message: message}
+}

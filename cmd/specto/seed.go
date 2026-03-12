@@ -74,7 +74,7 @@ func seedData(userSvc *service.UserService, taskSvc *service.TaskService, logger
 	}
 
 	for i := range fixtureUsers {
-		if err := userSvc.Create(&fixtureUsers[i]); err != nil {
+		if err := userSvc.Create(context.Background(), &fixtureUsers[i]); err != nil {
 			// Skip duplicates; the service returns a ConflictError.
 			if _, ok := errors.AsType[*domain.ConflictError](err); ok {
 				logger.Info("seed: user already exists, skipping", "email", fixtureUsers[i].Email)
@@ -84,11 +84,11 @@ func seedData(userSvc *service.UserService, taskSvc *service.TaskService, logger
 		}
 	}
 
-	alice, err := userSvc.GetByEmail("alice@example.com")
+	alice, err := userSvc.GetByEmail(context.Background(), "alice@example.com")
 	if err != nil {
 		return fmt.Errorf("lookup alice: %w", err)
 	}
-	bob, err := userSvc.GetByEmail("bob@example.com")
+	bob, err := userSvc.GetByEmail(context.Background(), "bob@example.com")
 	if err != nil {
 		return fmt.Errorf("lookup bob: %w", err)
 	}
@@ -101,7 +101,7 @@ func seedData(userSvc *service.UserService, taskSvc *service.TaskService, logger
 	}
 
 	for i := range fixtureTasks {
-		if err := taskSvc.Create(&fixtureTasks[i]); err != nil {
+		if err := taskSvc.Create(context.Background(), &fixtureTasks[i]); err != nil {
 			return fmt.Errorf("seed task %q: %w", fixtureTasks[i].Title, err)
 		}
 	}

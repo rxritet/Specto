@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -62,7 +63,7 @@ func NewBoltUserRepo(db *bbolt.DB) *BoltUserRepo {
 	return &BoltUserRepo{db: db}
 }
 
-func (r *BoltUserRepo) Create(user *domain.User) error {
+func (r *BoltUserRepo) Create(_ context.Context, user *domain.User) error {
 	return r.db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket(bucketUsers)
 
@@ -81,7 +82,7 @@ func (r *BoltUserRepo) Create(user *domain.User) error {
 	})
 }
 
-func (r *BoltUserRepo) GetByID(id int64) (*domain.User, error) {
+func (r *BoltUserRepo) GetByID(_ context.Context, id int64) (*domain.User, error) {
 	var user domain.User
 	err := r.db.View(func(tx *bbolt.Tx) error {
 		data := tx.Bucket(bucketUsers).Get(itob(id))
@@ -96,7 +97,7 @@ func (r *BoltUserRepo) GetByID(id int64) (*domain.User, error) {
 	return &user, nil
 }
 
-func (r *BoltUserRepo) GetByEmail(email string) (*domain.User, error) {
+func (r *BoltUserRepo) GetByEmail(_ context.Context, email string) (*domain.User, error) {
 	var found *domain.User
 	err := r.db.View(func(tx *bbolt.Tx) error {
 		return tx.Bucket(bucketUsers).ForEach(func(k, v []byte) error {
@@ -119,7 +120,7 @@ func (r *BoltUserRepo) GetByEmail(email string) (*domain.User, error) {
 	return found, nil
 }
 
-func (r *BoltUserRepo) Update(user *domain.User) error {
+func (r *BoltUserRepo) Update(_ context.Context, user *domain.User) error {
 	return r.db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket(bucketUsers)
 		if b.Get(itob(user.ID)) == nil {
@@ -135,7 +136,7 @@ func (r *BoltUserRepo) Update(user *domain.User) error {
 	})
 }
 
-func (r *BoltUserRepo) Delete(id int64) error {
+func (r *BoltUserRepo) Delete(_ context.Context, id int64) error {
 	return r.db.Update(func(tx *bbolt.Tx) error {
 		return tx.Bucket(bucketUsers).Delete(itob(id))
 	})
@@ -152,7 +153,7 @@ func NewBoltTaskRepo(db *bbolt.DB) *BoltTaskRepo {
 	return &BoltTaskRepo{db: db}
 }
 
-func (r *BoltTaskRepo) Create(task *domain.Task) error {
+func (r *BoltTaskRepo) Create(_ context.Context, task *domain.Task) error {
 	return r.db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket(bucketTasks)
 
@@ -171,7 +172,7 @@ func (r *BoltTaskRepo) Create(task *domain.Task) error {
 	})
 }
 
-func (r *BoltTaskRepo) GetByID(id int64) (*domain.Task, error) {
+func (r *BoltTaskRepo) GetByID(_ context.Context, id int64) (*domain.Task, error) {
 	var task domain.Task
 	err := r.db.View(func(tx *bbolt.Tx) error {
 		data := tx.Bucket(bucketTasks).Get(itob(id))
@@ -186,7 +187,7 @@ func (r *BoltTaskRepo) GetByID(id int64) (*domain.Task, error) {
 	return &task, nil
 }
 
-func (r *BoltTaskRepo) ListByUser(userID int64) ([]domain.Task, error) {
+func (r *BoltTaskRepo) ListByUser(_ context.Context, userID int64) ([]domain.Task, error) {
 	var tasks []domain.Task
 	err := r.db.View(func(tx *bbolt.Tx) error {
 		return tx.Bucket(bucketTasks).ForEach(func(k, v []byte) error {
@@ -203,7 +204,7 @@ func (r *BoltTaskRepo) ListByUser(userID int64) ([]domain.Task, error) {
 	return tasks, err
 }
 
-func (r *BoltTaskRepo) Update(task *domain.Task) error {
+func (r *BoltTaskRepo) Update(_ context.Context, task *domain.Task) error {
 	return r.db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket(bucketTasks)
 		if b.Get(itob(task.ID)) == nil {
@@ -219,7 +220,7 @@ func (r *BoltTaskRepo) Update(task *domain.Task) error {
 	})
 }
 
-func (r *BoltTaskRepo) Delete(id int64) error {
+func (r *BoltTaskRepo) Delete(_ context.Context, id int64) error {
 	return r.db.Update(func(tx *bbolt.Tx) error {
 		return tx.Bucket(bucketTasks).Delete(itob(id))
 	})

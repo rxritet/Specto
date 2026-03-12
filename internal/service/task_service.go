@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -22,17 +23,17 @@ func NewTaskService(tasks domain.TaskRepository, users domain.UserRepository, lo
 }
 
 // Create validates the input and persists a new task.
-func (s *TaskService) Create(task *domain.Task) error {
+func (s *TaskService) Create(ctx context.Context, task *domain.Task) error {
 	if err := s.validateTask(task); err != nil {
 		return err
 	}
 
 	// Verify the owning user exists.
-	if _, err := s.users.GetByID(task.UserID); err != nil {
+	if _, err := s.users.GetByID(ctx, task.UserID); err != nil {
 		return domain.NewNotFoundError("user", fmt.Sprintf("id=%d", task.UserID))
 	}
 
-	if err := s.tasks.Create(task); err != nil {
+	if err := s.tasks.Create(ctx, task); err != nil {
 		return fmt.Errorf("create task: %w", err)
 	}
 
@@ -41,8 +42,8 @@ func (s *TaskService) Create(task *domain.Task) error {
 }
 
 // GetByID returns a single task or a NotFoundError.
-func (s *TaskService) GetByID(id int64) (*domain.Task, error) {
-	task, err := s.tasks.GetByID(id)
+func (s *TaskService) GetByID(ctx context.Context, id int64) (*domain.Task, error) {
+	task, err := s.tasks.GetByID(ctx, id)
 	if err != nil {
 		if _, ok := errors.AsType[*domain.NotFoundError](err); ok {
 			return nil, err
@@ -53,14 +54,14 @@ func (s *TaskService) GetByID(id int64) (*domain.Task, error) {
 }
 
 // ListByUser returns all tasks for the given user.
-func (s *TaskService) ListByUser(userID int64) ([]domain.Task, error) {
+func (s *TaskService) ListByUser(ctx context.Context, userID int64) ([]domain.Task, error) {
 	// Verify the user exists so we can distinguish "no tasks" from
 	// "user does not exist".
-	if _, err := s.users.GetByID(userID); err != nil {
+	if _, err := s.users.GetByID(ctx, userID); err != nil {
 		return nil, domain.NewNotFoundError("user", fmt.Sprintf("id=%d", userID))
 	}
 
-	tasks, err := s.tasks.ListByUser(userID)
+	tasks, err := s.tasks.ListByUser(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("list tasks: %w", err)
 	}
@@ -68,7 +69,7 @@ func (s *TaskService) ListByUser(userID int64) ([]domain.Task, error) {
 }
 
 // Update validates and persists changes to an existing task.
-func (s *TaskService) Update(task *domain.Task) error {
+func (s *TaskService) Update(ctx context.Context, task *domain.Task) error {
 	if task.ID == 0 {
 		return domain.NewValidationError("id", "must be set")
 	}
@@ -78,11 +79,11 @@ func (s *TaskService) Update(task *domain.Task) error {
 	}
 
 	// Ensure the task exists.
-	if _, err := s.GetByID(task.ID); err != nil {
+	if _, err := s.GetByID(ctx, task.ID); err != nil {
 		return err
 	}
 
-	if err := s.tasks.Update(task); err != nil {
+	if err := s.tasks.Update(ctx, task); err != nil {
 		return fmt.Errorf("update task: %w", err)
 	}
 
@@ -91,12 +92,12 @@ func (s *TaskService) Update(task *domain.Task) error {
 }
 
 // Delete removes a task by id.
-func (s *TaskService) Delete(id int64) error {
-	if _, err := s.GetByID(id); err != nil {
+func (s *TaskService) Delete(ctx context.Context, id int64) error {
+	if _, err := s.GetByID(ctx, id); err != nil {
 		return err
 	}
 
-	if err := s.tasks.Delete(id); err != nil {
+	if err := s.tasks.Delete(ctx, id); err != nil {
 		return fmt.Errorf("delete task: %w", err)
 	}
 
