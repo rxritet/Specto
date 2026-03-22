@@ -5,6 +5,7 @@
 *.so
 *.dylib
 bin/
+.github/
 
 # Local data
 *.db
