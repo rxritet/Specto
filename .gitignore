@@ -5,8 +5,7 @@
 *.so
 *.dylib
 bin/
-.github/workflows/ci.yml
-.github/
+
 
 # Local data
 *.db
@@ -26,3 +25,6 @@ bin/
 # OS
 .DS_Store
 Thumbs.db
+
+# GitHub metadata
+.github/
