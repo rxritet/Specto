@@ -5,6 +5,7 @@
 *.so
 *.dylib
 bin/
+.github/workflows/ci.yml
 .github/
 
 # Local data
