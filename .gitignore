@@ -5,6 +5,7 @@
 *.so
 *.dylib
 bin/
+backend/bin/
 
 
 # Local data
@@ -15,6 +16,14 @@ bin/
 
 # Output of go coverage
 *.out
+coverage.out
+
+# Frontend build artifacts and caches
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/.cache/
+frontend/coverage/
 
 # IDE
 .idea/
@@ -25,6 +34,3 @@ bin/
 # OS
 .DS_Store
 Thumbs.db
-
-# GitHub metadata
-.github/
