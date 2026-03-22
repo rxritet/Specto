@@ -14,7 +14,7 @@ Environment=SPECTO_HOST=0.0.0.0
 Environment=SPECTO_PORT=8080
 Environment=SPECTO_LOG_LEVEL=info
 Environment=SPECTO_DB_PROVIDER=postgres
-Environment=SPECTO_DB_DSN=postgres://specto:specto@localhost:5432/specto?sslmode=disable
+EnvironmentFile=-/etc/specto/specto.env
 LimitNOFILE=65535
 StandardOutput=journal
 StandardError=journal
