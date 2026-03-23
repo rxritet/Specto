@@ -33,7 +33,7 @@ func NewRouter(cfg *config.Config, logger *slog.Logger, tasks *service.TaskServi
 		Logger: logger,
 		Tasks:  tasks,
 		Users:  users,
-		auth:   newSessionManager(cfg),
+		auth:   newSessionManager(cfg, redisConn),
 	}
 
 	r.routes()

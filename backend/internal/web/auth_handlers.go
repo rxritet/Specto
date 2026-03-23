@@ -35,7 +35,7 @@ func (rt *Router) handleAuthRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := rt.auth.issue(w, user.ID); err != nil {
+	if err := rt.auth.issue(r.Context(), w, user.ID); err != nil {
 		rt.Logger.Error("issue session failed", "error", err)
 		rt.respondError(w, http.StatusInternalServerError, "internal server error")
 		return
@@ -57,7 +57,7 @@ func (rt *Router) handleAuthLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := rt.auth.issue(w, user.ID); err != nil {
+	if err := rt.auth.issue(r.Context(), w, user.ID); err != nil {
 		rt.Logger.Error("issue session failed", "error", err)
 		rt.respondError(w, http.StatusInternalServerError, "internal server error")
 		return
@@ -67,6 +67,7 @@ func (rt *Router) handleAuthLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (rt *Router) handleAuthLogout(w http.ResponseWriter, r *http.Request) {
+	rt.auth.revoke(r.Context(), r)
 	rt.auth.clear(w)
 	rt.respondJSON(w, http.StatusOK, map[string]string{"status": "logged_out"})
 }
