@@ -15,6 +15,8 @@ import (
 	"github.com/rxritet/Specto/internal/service"
 )
 
+const authMePath = "/auth/me"
+
 func TestRedisSessionLifecycle(t *testing.T) {
 	mini, err := miniredis.Run()
 	if err != nil {
@@ -49,7 +51,7 @@ func TestRedisSessionLifecycle(t *testing.T) {
 		t.Fatalf("expected redis session key %q to exist", key)
 	}
 
-	meReq := httptest.NewRequest(http.MethodGet, "/auth/me", nil)
+	meReq := httptest.NewRequest(http.MethodGet, authMePath, nil)
 	meReq.AddCookie(cookie)
 	meRec := httptest.NewRecorder()
 	router.ServeHTTP(meRec, meReq)
@@ -69,7 +71,7 @@ func TestRedisSessionLifecycle(t *testing.T) {
 		t.Fatalf("expected redis session key %q to be deleted", key)
 	}
 
-	meAfterLogoutReq := httptest.NewRequest(http.MethodGet, "/auth/me", nil)
+	meAfterLogoutReq := httptest.NewRequest(http.MethodGet, authMePath, nil)
 	meAfterLogoutReq.AddCookie(cookie)
 	meAfterLogoutRec := httptest.NewRecorder()
 	router.ServeHTTP(meAfterLogoutRec, meAfterLogoutReq)
@@ -128,7 +130,7 @@ func TestRedisSessionMissingKeyUnauthorized(t *testing.T) {
 		t.Fatalf("delete redis session key: %v", err)
 	}
 
-	meReq := httptest.NewRequest(http.MethodGet, "/auth/me", nil)
+	meReq := httptest.NewRequest(http.MethodGet, authMePath, nil)
 	meReq.AddCookie(cookies[0])
 	meRec := httptest.NewRecorder()
 	router.ServeHTTP(meRec, meReq)

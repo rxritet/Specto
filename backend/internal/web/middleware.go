@@ -125,41 +125,60 @@ func RedisRateLimit(client *redis.Client, perMinute int, logger *slog.Logger) Mi
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ip := clientIP(r.RemoteAddr)
-			bucket := time.Now().Unix() / 60
-			key := fmt.Sprintf("rate:%s:%d", ip, bucket)
-
-			ctx, cancel := context.WithTimeout(r.Context(), 200*time.Millisecond)
-			defer cancel()
-
-			count, err := client.Incr(ctx, key).Result()
+			key := rateLimitKey(r.RemoteAddr, time.Now())
+			count, err := incrementRateCounter(r.Context(), client, key, logger)
 			if err != nil {
-				logger.Warn("rate limiter redis error", "error", err)
 				next.ServeHTTP(w, r)
 				return
 			}
 
-			if count == 1 {
-				if err := client.Expire(ctx, key, 2*time.Minute).Err(); err != nil {
-					logger.Warn("rate limiter expire error", "error", err)
-				}
-			}
-
-			if count > int64(perMinute) {
-				now := time.Now()
-				retryAfter := 60 - now.Second()
-				if retryAfter <= 0 {
-					retryAfter = 1
-				}
-
-				w.Header().Set("Retry-After", strconv.Itoa(retryAfter))
-				http.Error(w, http.StatusText(http.StatusTooManyRequests), http.StatusTooManyRequests)
+			if isRateLimited(count, perMinute) {
+				writeRateLimitResponse(w, time.Now())
 				return
 			}
 
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+func rateLimitKey(remoteAddr string, now time.Time) string {
+	ip := clientIP(remoteAddr)
+	bucket := now.Unix() / 60
+	return fmt.Sprintf("rate:%s:%d", ip, bucket)
+}
+
+func incrementRateCounter(ctx context.Context, client *redis.Client, key string, logger *slog.Logger) (int64, error) {
+	timeoutCtx, cancel := context.WithTimeout(ctx, 200*time.Millisecond)
+	defer cancel()
+
+	count, err := client.Incr(timeoutCtx, key).Result()
+	if err != nil {
+		logger.Warn("rate limiter redis error", "error", err)
+		return 0, err
+	}
+
+	if count == 1 {
+		if expireErr := client.Expire(timeoutCtx, key, 2*time.Minute).Err(); expireErr != nil {
+			logger.Warn("rate limiter expire error", "error", expireErr)
+		}
+	}
+
+	return count, nil
+}
+
+func isRateLimited(count int64, perMinute int) bool {
+	return count > int64(perMinute)
+}
+
+func writeRateLimitResponse(w http.ResponseWriter, now time.Time) {
+	retryAfter := 60 - now.Second()
+	if retryAfter <= 0 {
+		retryAfter = 1
+	}
+
+	w.Header().Set("Retry-After", strconv.Itoa(retryAfter))
+	http.Error(w, http.StatusText(http.StatusTooManyRequests), http.StatusTooManyRequests)
 }
 
 func clientIP(remoteAddr string) string {
