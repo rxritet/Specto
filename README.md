@@ -8,16 +8,16 @@
 
 Specto объединяет:
 
-- Backend на Go с HTTP API, конфигурацией через переменные окружения и поддержкой PostgreSQL.
+- Backend на Go с HTTP API и triple-store архитектурой: PostgreSQL + Redis + BoltDB.
 - Frontend на Angular + TypeScript для пользовательского интерфейса.
-- Локальную инфраструктуру (PostgreSQL + pgAdmin) через Docker Compose.
+- Локальную инфраструктуру (PostgreSQL + pgAdmin + Redis) через Docker Compose.
 
 На текущий момент в кодовой базе присутствует legacy-логика задач (tasks) для совместимости. Новые изменения должны идти в банковские модули.
 
 ## Стек Технологий
 
 - Backend: Go 1.26, net/http, ServeMux, Cobra, slog.
-- Database: PostgreSQL (основной), BoltDB (legacy-режим).
+- Storage: PostgreSQL (ACID-ядро), Redis (сессии/rate-limit/кэш), BoltDB (audit log).
 - Frontend: Angular 19, TypeScript, RxJS.
 - CI/CD: GitHub Actions.
 - Локальная инфраструктура: Docker Compose.
@@ -38,7 +38,7 @@ Specto объединяет:
 │   └── go.mod
 ├── frontend/                   # Angular frontend
 ├── .github/workflows/ci.yml    # CI pipeline
-├── docker-compose.yml          # PostgreSQL + pgAdmin
+├── docker-compose.yml          # PostgreSQL + pgAdmin + Redis
 └── README.md
 ```
 
@@ -60,6 +60,7 @@ docker compose up -d
 
 - PostgreSQL: localhost:5432
 - pgAdmin: http://localhost:5050
+- Redis: localhost:6379
 
 ### 2. Запустить Backend
 
@@ -88,9 +89,13 @@ Frontend по умолчанию доступен на http://localhost:4200.
 - SPECTO_HOST
 - SPECTO_PORT
 - SPECTO_LOG_LEVEL
-- SPECTO_DB_PROVIDER (postgres или bolt)
-- SPECTO_DB_DSN (для postgres)
-- SPECTO_DB_PATH (для bolt)
+- SPECTO_POSTGRES_DSN
+- SPECTO_REDIS_ADDR
+- SPECTO_REDIS_PASSWORD
+- SPECTO_REDIS_DB
+- SPECTO_BOLT_PATH
+- SPECTO_RATE_LIMIT_PER_MINUTE
+- SPECTO_BALANCE_CACHE_TTL
 - SPECTO_AUTH_SECRET
 - SPECTO_AUTH_SESSION_TTL
 - SPECTO_AUTH_SECURE_COOKIES
