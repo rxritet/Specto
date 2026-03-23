@@ -29,7 +29,7 @@ func OpenBolt(path string, logger *slog.Logger) (*bbolt.DB, error) {
 	}
 
 	err = db.Update(func(tx *bbolt.Tx) error {
-		for _, b := range [][]byte{bucketUsers, bucketTasks} {
+		for _, b := range [][]byte{bucketUsers, bucketTasks, bucketAuditLog} {
 			if _, err := tx.CreateBucketIfNotExists(b); err != nil {
 				return err
 			}
