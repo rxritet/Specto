@@ -7,6 +7,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"github.com/rxritet/Specto/internal/config"
+	"github.com/rxritet/Specto/internal/domain"
 	"github.com/rxritet/Specto/internal/service"
 )
 
@@ -17,22 +18,21 @@ type Router struct {
 	Logger *slog.Logger
 	Tasks  *service.TaskService
 	Users  *service.UserService
+	Audit  domain.AuditLogger
 	auth   *sessionManager
 }
 
 // NewRouter creates the application ServeMux, registers all routes using
 // Go 1.22+ pattern matching, and wraps the mux with the middleware stack.
-func NewRouter(cfg *config.Config, logger *slog.Logger, tasks *service.TaskService, users *service.UserService, redisClient ...*redis.Client) http.Handler {
-	var redisConn *redis.Client
-	if len(redisClient) > 0 {
-		redisConn = redisClient[0]
-	}
+func NewRouter(cfg *config.Config, logger *slog.Logger, tasks *service.TaskService, users *service.UserService, redisClient *redis.Client, auditLogger domain.AuditLogger) http.Handler {
+	redisConn := redisClient
 
 	r := &Router{
 		Mux:    http.NewServeMux(),
 		Logger: logger,
 		Tasks:  tasks,
 		Users:  users,
+		Audit:  auditLogger,
 		auth:   newSessionManager(cfg, redisConn),
 	}
 
@@ -47,9 +47,12 @@ func NewRouter(cfg *config.Config, logger *slog.Logger, tasks *service.TaskServi
 	if redisConn != nil {
 		middlewares = append([]Middleware{RedisRateLimit(redisConn, cfg.RateLimitPerMinute, logger)}, middlewares...)
 	}
+	if auditLogger != nil {
+		middlewares = append([]Middleware{AuditTrail(auditLogger, logger)}, middlewares...)
+	}
 
 	// Middleware stack (outermost → innermost):
-	//   RedisRateLimit(optional) → Recovery → SecureHeaders → Logging → Mux
+	//   AuditTrail(optional) → RedisRateLimit(optional) → Recovery → SecureHeaders → Logging → Mux
 	return Chain(
 		r.Mux,
 		middlewares...,

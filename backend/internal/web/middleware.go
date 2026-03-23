@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/rxritet/Specto/internal/domain"
 )
 
 // Middleware is a standard HTTP middleware signature.
@@ -170,4 +171,33 @@ func clientIP(remoteAddr string) string {
 		return remoteAddr
 	}
 	return host
+}
+
+// AuditTrail appends request metadata to the audit store.
+func AuditTrail(audit domain.AuditLogger, logger *slog.Logger) Middleware {
+	if audit == nil {
+		return func(next http.Handler) http.Handler { return next }
+	}
+
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			rw := &responseWriter{ResponseWriter: w, status: http.StatusOK}
+			next.ServeHTTP(rw, r)
+
+			rec := domain.AuditRecord{
+				Timestamp: time.Now().UTC(),
+				Method:    r.Method,
+				Path:      r.URL.Path,
+				Remote:    clientIP(r.RemoteAddr),
+				Status:    rw.status,
+			}
+
+			ctx, cancel := context.WithTimeout(r.Context(), 300*time.Millisecond)
+			defer cancel()
+
+			if err := audit.Append(ctx, rec); err != nil {
+				logger.Warn("audit append failed", "error", err)
+			}
+		})
+	}
 }

@@ -47,6 +47,8 @@ var serverCmd = &cobra.Command{
 		}
 		defer boltDB.Close()
 
+		auditLogger := database.NewBoltAuditLogger(boltDB, logger)
+
 		var (
 			userRepo domain.UserRepository
 			taskRepo domain.TaskRepository
@@ -59,7 +61,7 @@ var serverCmd = &cobra.Command{
 		userSvc := service.NewUserService(userRepo, logger)
 		taskSvc := service.NewTaskService(taskRepo, userRepo, logger)
 
-		srv := server.New(cfg, logger, taskSvc, userSvc, redisClient)
+		srv := server.New(cfg, logger, taskSvc, userSvc, redisClient, auditLogger)
 		return srv.Run()
 	},
 }
