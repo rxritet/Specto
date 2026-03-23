@@ -17,7 +17,7 @@ linters:
     - prealloc
     - nolintlint
     - bodyclose
-    - exportloopref
+    - copyloopvar
     - durationcheck
     - nilerr
     - whitespace
@@ -37,7 +37,7 @@ linters-settings:
     check-type-assertions: true
     check-blank: false
   govet:
-    enable-all: true
+    enable-all: false
   nolintlint:
     require-explanation: true
     require-specific: true

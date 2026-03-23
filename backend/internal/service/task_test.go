@@ -232,7 +232,7 @@ func TestTaskServiceCreateValidationErrorInvalidStatus(t *testing.T) {
 	task := &domain.Task{
 		UserID: 1,
 		Title:  "Bad status",
-		Status: "cancelled",
+		Status: "canceled",
 	}
 
 	err := svc.Create(testCtx, task)

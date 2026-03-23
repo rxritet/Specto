@@ -63,7 +63,7 @@ func (sm *sessionManager) issue(ctx context.Context, w http.ResponseWriter, user
 
 func (sm *sessionManager) buildCookieValue(ctx context.Context, userID int64, expiresAt time.Time) (string, error) {
 	if sm.redis == nil {
-		return sm.sign(userID, expiresAt)
+		return sm.sign(userID, expiresAt), nil
 	}
 
 	sid, err := randomSessionID()
@@ -153,12 +153,12 @@ func (sm *sessionManager) userIDFromCookieValue(ctx context.Context, cookieValue
 	return userID, nil
 }
 
-func (sm *sessionManager) sign(userID int64, expiresAt time.Time) (string, error) {
+func (sm *sessionManager) sign(userID int64, expiresAt time.Time) string {
 	payload := fmt.Sprintf("%d:%d", userID, expiresAt.Unix())
 	payloadEncoded := base64.RawURLEncoding.EncodeToString([]byte(payload))
 	sig := sm.signature(payload)
 	sigEncoded := base64.RawURLEncoding.EncodeToString(sig)
-	return payloadEncoded + "." + sigEncoded, nil
+	return payloadEncoded + "." + sigEncoded
 }
 
 func (sm *sessionManager) verify(token string) (int64, error) {
