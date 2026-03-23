@@ -17,7 +17,7 @@ Specto объединяет:
 ## Стек Технологий
 
 - Backend: Go 1.26, net/http, ServeMux, Cobra, slog.
-- Storage: PostgreSQL (ACID-ядро), Redis (сессии/rate-limit/кэш), BoltDB (audit log).
+- Storage: PostgreSQL (ACID-ядро), Redis (server-side сессии/rate-limit/кэш), BoltDB (append-only audit log).
 - Frontend: Angular 19, TypeScript, RxJS.
 - CI/CD: GitHub Actions.
 - Локальная инфраструктура: Docker Compose.
