@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/redis/go-redis/v9"
 	"github.com/rxritet/Specto/internal/config"
 	"github.com/rxritet/Specto/internal/service"
 )
@@ -21,7 +22,12 @@ type Router struct {
 
 // NewRouter creates the application ServeMux, registers all routes using
 // Go 1.22+ pattern matching, and wraps the mux with the middleware stack.
-func NewRouter(cfg *config.Config, logger *slog.Logger, tasks *service.TaskService, users *service.UserService) http.Handler {
+func NewRouter(cfg *config.Config, logger *slog.Logger, tasks *service.TaskService, users *service.UserService, redisClient ...*redis.Client) http.Handler {
+	var redisConn *redis.Client
+	if len(redisClient) > 0 {
+		redisConn = redisClient[0]
+	}
+
 	r := &Router{
 		Mux:    http.NewServeMux(),
 		Logger: logger,
@@ -32,13 +38,21 @@ func NewRouter(cfg *config.Config, logger *slog.Logger, tasks *service.TaskServi
 
 	r.routes()
 
-	// Middleware stack (outermost → innermost):
-	//   Recovery → SecureHeaders → Logging → Mux
-	return Chain(
-		r.Mux,
+	middlewares := []Middleware{
 		Recovery(logger),
 		SecureHeaders(),
 		Logging(logger),
+	}
+
+	if redisConn != nil {
+		middlewares = append([]Middleware{RedisRateLimit(redisConn, cfg.RateLimitPerMinute, logger)}, middlewares...)
+	}
+
+	// Middleware stack (outermost → innermost):
+	//   RedisRateLimit(optional) → Recovery → SecureHeaders → Logging → Mux
+	return Chain(
+		r.Mux,
+		middlewares...,
 	)
 }
 

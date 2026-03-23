@@ -1,11 +1,16 @@
 package web
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"runtime/debug"
+	"strconv"
 	"time"
+
+	"github.com/redis/go-redis/v9"
 )
 
 // Middleware is a standard HTTP middleware signature.
@@ -108,4 +113,61 @@ func SecureHeaders() Middleware {
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+// RedisRateLimit limits requests per IP in a rolling 1-minute bucket.
+// If Redis is unavailable, requests are allowed (fail-open) to avoid hard outages.
+func RedisRateLimit(client *redis.Client, perMinute int, logger *slog.Logger) Middleware {
+	if client == nil || perMinute <= 0 {
+		return func(next http.Handler) http.Handler { return next }
+	}
+
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ip := clientIP(r.RemoteAddr)
+			bucket := time.Now().Unix() / 60
+			key := fmt.Sprintf("rate:%s:%d", ip, bucket)
+
+			ctx, cancel := context.WithTimeout(r.Context(), 200*time.Millisecond)
+			defer cancel()
+
+			count, err := client.Incr(ctx, key).Result()
+			if err != nil {
+				logger.Warn("rate limiter redis error", "error", err)
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			if count == 1 {
+				if err := client.Expire(ctx, key, 2*time.Minute).Err(); err != nil {
+					logger.Warn("rate limiter expire error", "error", err)
+				}
+			}
+
+			if count > int64(perMinute) {
+				now := time.Now()
+				retryAfter := 60 - now.Second()
+				if retryAfter <= 0 {
+					retryAfter = 1
+				}
+
+				w.Header().Set("Retry-After", strconv.Itoa(retryAfter))
+				http.Error(w, http.StatusText(http.StatusTooManyRequests), http.StatusTooManyRequests)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+func clientIP(remoteAddr string) string {
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err != nil {
+		return remoteAddr
+	}
+	if host == "" {
+		return remoteAddr
+	}
+	return host
 }
