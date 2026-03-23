@@ -19,41 +19,41 @@ var seedCmd = &cobra.Command{
 	Long:  "Creates fixture users and tasks through the service layer.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg := config.Load()
+		if err := cfg.Validate(); err != nil {
+			return fmt.Errorf("invalid config: %w", err)
+		}
+
 		logger := slog.Default()
+
+		pg, err := database.OpenPostgres(cfg.PostgresDSN, logger)
+		if err != nil {
+			return fmt.Errorf("open postgres: %w", err)
+		}
+		defer pg.Close()
+
+		if err := database.Migrate(context.Background(), pg, logger); err != nil {
+			return fmt.Errorf("migrate: %w", err)
+		}
+
+		redisClient, err := database.OpenRedis(cfg.RedisAddr, cfg.RedisPass, cfg.RedisDB, logger)
+		if err != nil {
+			return fmt.Errorf("open redis: %w", err)
+		}
+		defer redisClient.Close()
+
+		boltDB, err := database.OpenBolt(cfg.BoltPath, logger)
+		if err != nil {
+			return fmt.Errorf("open bolt: %w", err)
+		}
+		defer boltDB.Close()
 
 		var (
 			userRepo domain.UserRepository
 			taskRepo domain.TaskRepository
 		)
 
-		switch cfg.DBProvider {
-		case "postgres":
-			db, err := database.OpenPostgres(cfg.DBDsn, logger)
-			if err != nil {
-				return fmt.Errorf("open postgres: %w", err)
-			}
-			defer db.Close()
-
-			if err := database.Migrate(context.Background(), db, logger); err != nil {
-				return fmt.Errorf("migrate: %w", err)
-			}
-
-			userRepo = database.NewPgUserRepo(db)
-			taskRepo = database.NewPgTaskRepo(db)
-
-		case "bolt":
-			bdb, err := database.OpenBolt(cfg.DBPath, logger)
-			if err != nil {
-				return fmt.Errorf("open bolt: %w", err)
-			}
-			defer bdb.Close()
-
-			userRepo = database.NewBoltUserRepo(bdb)
-			taskRepo = database.NewBoltTaskRepo(bdb)
-
-		default:
-			return fmt.Errorf("unknown db provider: %s", cfg.DBProvider)
-		}
+		userRepo = database.NewPgUserRepo(pg)
+		taskRepo = database.NewPgTaskRepo(pg)
 
 		userSvc := service.NewUserService(userRepo, logger)
 		taskSvc := service.NewTaskService(taskRepo, userRepo, logger)
