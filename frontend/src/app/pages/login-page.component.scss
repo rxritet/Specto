@@ -1,0 +1,76 @@
+.login-shell {
+  min-height: calc(100vh - 180px);
+  display: grid;
+  place-items: center;
+}
+
+.panel {
+  width: 100%;
+  max-width: 460px;
+  background: var(--card-bg);
+  border: 1px solid #333;
+  border-radius: 18px;
+  padding: 1.25rem;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tab {
+  border: 1px solid #444;
+  background: #151515;
+  color: var(--text-muted);
+  border-radius: 10px;
+  padding: 0.6rem;
+  cursor: pointer;
+
+  &.active {
+    color: white;
+    background: var(--accent-color);
+    border-color: transparent;
+  }
+}
+
+.form-stack {
+  display: grid;
+  gap: 0.6rem;
+
+  h1 {
+    margin: 0 0 0.4rem 0;
+    font-size: 1.4rem;
+  }
+}
+
+input,
+button {
+  border-radius: 10px;
+  border: 1px solid #444;
+  padding: 0.62rem 0.72rem;
+  font-size: 0.95rem;
+}
+
+input {
+  background: #111;
+  color: white;
+}
+
+.btn-primary {
+  border: none;
+  background: var(--accent-color);
+  color: white;
+  cursor: pointer;
+  margin-top: 0.3rem;
+}
+
+.message {
+  margin-top: 0.85rem;
+  color: var(--text-muted);
+}
+
+.message.danger {
+  color: var(--danger);
+}

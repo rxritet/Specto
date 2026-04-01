@@ -1,0 +1,174 @@
+.accent-hero {
+  background: linear-gradient(135deg, var(--accent-color) 0%, #341f97 100%);
+  padding: 2.5rem;
+  border-radius: 24px;
+  margin-bottom: 2rem;
+
+  h1 {
+    margin: 0 0 0.6rem 0;
+    font-size: 2.25rem;
+  }
+
+  p {
+    margin: 0;
+    opacity: 0.9;
+    max-width: 720px;
+  }
+}
+
+.hero-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.grid-layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+}
+
+.card {
+  background-color: var(--card-bg);
+  border-radius: 18px;
+  border: 1px solid #333;
+  padding: 1.25rem;
+
+  h2 {
+    margin-top: 0;
+    color: var(--text-muted);
+  }
+}
+
+.accounts-card {
+  min-height: 360px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.account-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  margin-bottom: 0.65rem;
+}
+
+.acc-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.acc-name {
+  font-weight: 700;
+}
+
+.acc-number {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.acc-balance {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.actions-grid {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.action-btn {
+  width: 100%;
+  border: none;
+  color: white;
+  background: #2d2d2d;
+  border-radius: 12px;
+  padding: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+
+  &:hover {
+    background: #3a3a3a;
+  }
+
+  .icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: var(--accent-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+  }
+}
+
+.summary-line {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #333;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.state-text {
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.state-text.danger {
+  color: var(--danger);
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-icon {
+  border: none;
+  cursor: pointer;
+  border-radius: 10px;
+}
+
+.btn-primary {
+  background: #ffffff;
+  color: #111;
+  padding: 0.6rem 0.95rem;
+  font-weight: 700;
+}
+
+.btn-secondary {
+  background: #e8e2ff;
+  color: #1f1a36;
+  padding: 0.6rem 0.95rem;
+}
+
+.btn-icon {
+  background: var(--accent-color);
+  color: white;
+  width: 34px;
+  height: 34px;
+}
+
+@media (max-width: 1000px) {
+  .grid-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

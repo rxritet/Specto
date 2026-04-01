@@ -1,0 +1,64 @@
+<section class="accent-hero">
+  <div class="hero-content">
+    <h1>Добро пожаловать в Specto</h1>
+    <p>Личный кабинет подключен к Backend API. Обновления по счетам происходят в реальном времени.</p>
+    <div class="hero-actions">
+      <button class="btn-primary" (click)="goToAccounts()">Открыть счета</button>
+      <button class="btn-secondary" (click)="goToPayments()">Перейти к переводам</button>
+    </div>
+  </div>
+</section>
+
+<div class="grid-layout">
+  <div class="card accounts-card">
+    <div class="card-header">
+      <h2>Мои счета</h2>
+      <button class="btn-icon" (click)="loadAccounts()" [disabled]="isLoading">↻</button>
+    </div>
+
+    <div *ngIf="isLoading" class="state-text">Загрузка счетов...</div>
+    <div *ngIf="!isLoading && errorMessage" class="state-text danger">{{ errorMessage }}</div>
+
+    <div *ngIf="!isLoading && !errorMessage && accounts.length === 0" class="state-text">
+      У вас пока нет счетов. Создайте первый счет на странице «Мои счета».
+    </div>
+
+    <div *ngFor="let acc of accounts" class="account-item">
+      <div class="acc-info">
+        <span class="acc-name">{{ acc.currency }} счет</span>
+        <span class="acc-number">ID: {{ acc.id }}</span>
+      </div>
+      <div class="acc-balance">{{ formatCurrency(acc.balance, acc.currency) }}</div>
+    </div>
+  </div>
+
+  <div class="card actions-card">
+    <h2>Быстрые действия</h2>
+    <div class="actions-grid">
+      <button class="action-btn" (click)="goToPayments()">
+        <div class="icon">⇄</div>
+        <span>Сделать перевод</span>
+      </button>
+      <button class="action-btn" (click)="goToAccounts()">
+        <div class="icon">＋</div>
+        <span>Открыть счет</span>
+      </button>
+      <button class="action-btn" (click)="loadAccounts()" [disabled]="isLoading">
+        <div class="icon">↻</div>
+        <span>Обновить баланс</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="card summary-card">
+    <h2>Сводка</h2>
+    <div class="summary-line">
+      <span>Количество счетов</span>
+      <strong>{{ accounts.length }}</strong>
+    </div>
+    <div class="summary-line">
+      <span>Общий баланс (в центах/тиынах)</span>
+      <strong>{{ totalBalance }}</strong>
+    </div>
+  </div>
+</div>

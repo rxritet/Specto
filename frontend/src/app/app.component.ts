@@ -1,42 +1,59 @@
-import { Component, OnInit } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { BankingService, Account } from './banking.service';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AuthService, User } from './auth.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, CommonModule],
-  providers: [BankingService],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
 export class AppComponent implements OnInit {
-  title = 'Specto Bank';
-  accounts: Account[] = [];
+  private readonly destroyRef = inject(DestroyRef);
+  readonly title = 'Specto Bank';
+  currentUser: User | null = null;
 
-  constructor(private readonly bankingService: BankingService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly router: Router,
+  ) {}
 
-  ngOnInit() {
-    this.loadAccounts();
-  }
+  ngOnInit(): void {
+    this.authService.currentUser$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((user) => {
+        this.currentUser = user;
+      });
 
-  loadAccounts() {
-    this.bankingService.getAccounts().subscribe({
-      next: (data) => {
-        this.accounts = data;
+    this.authService.ensureSession().subscribe({
+      error: () => {
+        this.currentUser = null;
       },
-      error: (err) => {
-        console.error('Failed to load accounts. Migration might be pending.', err);
-      }
     });
   }
 
-  formatCurrency(amount: number, currency: string) {
-    // Баланс хранится в центах/тиынах
-    return (amount / 100).toLocaleString('ru-RU', { 
-      style: 'currency', 
-      currency: currency 
+  get userInitial(): string {
+    if (!this.currentUser?.name) {
+      return 'U';
+    }
+    return this.currentUser.name.charAt(0).toUpperCase();
+  }
+
+  goToLogin(): void {
+    void this.router.navigate(['/login']);
+  }
+
+  logout(): void {
+    this.authService.logout().subscribe({
+      next: () => {
+        void this.router.navigate(['/login']);
+      },
+      error: () => {
+        void this.router.navigate(['/login']);
+      },
     });
   }
 }

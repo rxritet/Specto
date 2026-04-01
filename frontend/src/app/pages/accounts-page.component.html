@@ -1,0 +1,38 @@
+<section class="page-title">
+  <h1>Мои счета</h1>
+  <button class="btn-refresh" (click)="loadAccounts()" [disabled]="isLoading">Обновить</button>
+</section>
+
+<div class="layout-grid">
+  <section class="card">
+    <h2>Открытие счета</h2>
+    <form [formGroup]="createForm" (ngSubmit)="createAccount()" class="form-stack">
+      <label for="currency">Валюта</label>
+      <select id="currency" formControlName="currency">
+        <option value="KZT">KZT</option>
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="RUB">RUB</option>
+      </select>
+
+      <button type="submit" class="btn-primary" [disabled]="isSubmitting">Открыть счет</button>
+    </form>
+
+    <p *ngIf="successMessage" class="message success">{{ successMessage }}</p>
+    <p *ngIf="errorMessage" class="message danger">{{ errorMessage }}</p>
+  </section>
+
+  <section class="card">
+    <h2>Список счетов</h2>
+    <p *ngIf="isLoading" class="message">Загрузка...</p>
+    <p *ngIf="!isLoading && accounts.length === 0" class="message">Счетов пока нет.</p>
+
+    <div *ngFor="let acc of accounts" class="account-row">
+      <div>
+        <strong>{{ acc.currency }}</strong>
+        <div class="meta">ID счета: {{ acc.id }}</div>
+      </div>
+      <div class="balance">{{ formatCurrency(acc.balance, acc.currency) }}</div>
+    </div>
+  </section>
+</div>

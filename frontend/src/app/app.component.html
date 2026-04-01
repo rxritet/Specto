@@ -1,76 +1,25 @@
 <header class="navbar">
-  <div class="logo">SPECTO <span>BANK</span></div>
+  <div class="logo" routerLink="/dashboard">SPECTO <span>BANK</span></div>
   <nav>
-    <a href="#" class="nav-item active">Личный кабинет</a>
-    <a href="#" class="nav-item">Мои счета</a>
-    <a href="#" class="nav-item">Платежи</a>
+    <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-item">Личный кабинет</a>
+    <a routerLink="/accounts" routerLinkActive="active" class="nav-item">Мои счета</a>
+    <a routerLink="/payments" routerLinkActive="active" class="nav-item">Платежи</a>
   </nav>
-  <div class="user-profile">
-    <div class="avatar">U</div>
-    <span>Пользователь</span>
+
+  <div class="user-profile" *ngIf="currentUser; else guestUser">
+    <div class="avatar">{{ userInitial }}</div>
+    <span>{{ currentUser.name }}</span>
+    <button class="btn-link" (click)="logout()">Выйти</button>
   </div>
+  <ng-template #guestUser>
+    <div class="user-profile">
+      <div class="avatar">G</div>
+      <span>Гость</span>
+      <button class="btn-link" (click)="goToLogin()">Войти</button>
+    </div>
+  </ng-template>
 </header>
 
-<main class="dashboard">
-  <section class="accent-hero">
-    <div class="hero-content">
-      <h1>Добро пожаловать в Specto</h1>
-      <p>Миграция банковских систем в процессе. Ваши счета скоро будут здесь.</p>
-    </div>
-  </section>
-
-  <div class="grid-layout">
-    <!-- Accounts Section -->
-    <div class="card accounts-card">
-      <div class="card-header">
-        <h2>Мои счета</h2>
-        <button class="btn-icon" (click)="loadAccounts()">↻</button>
-      </div>
-
-      <div *ngIf="accounts.length === 0" class="empty-state">
-        <p>У вас еще нет открытых счетов.</p>
-        <button class="btn-primary" (click)="loadAccounts()">Обновить</button>
-      </div>
-
-      <div *ngFor="let acc of accounts" class="account-item">
-        <div class="acc-info">
-          <span class="acc-name">{{ acc.currency }} Account</span>
-          <span class="acc-number">Acc ID: {{ acc.id }}</span>
-        </div>
-        <div class="acc-balance">{{ formatCurrency(acc.balance, acc.currency) }}</div>
-      </div>
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="card actions-card">
-      <h2>Быстрые действия</h2>
-      <div class="actions-grid">
-        <button class="action-btn">
-          <div class="icon">⇄</div>
-          <span>Перевод</span>
-        </button>
-        <button class="action-btn">
-          <div class="icon">💳</div>
-          <span>Выпустить карту</span>
-        </button>
-        <button class="action-btn">
-          <div class="icon">📄</div>
-          <span>Выписка</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Legacy Tasks (Temporarily kept) -->
-    <div class="card tasks-card">
-      <div class="card-header">
-        <h2>Старые задачи (Legacy)</h2>
-      </div>
-      <div class="task-list">
-        <div class="task-item">Завершить миграцию Ledger</div>
-        <div class="task-item">Настроить Swift-интеграцию</div>
-      </div>
-    </div>
-  </div>
+<main class="page-shell">
+  <router-outlet></router-outlet>
 </main>
-
-<router-outlet></router-outlet>
