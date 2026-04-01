@@ -177,7 +177,7 @@ func newAuthTestRouter() http.Handler {
 		AuthSessionTTL:    time.Hour,
 		AuthSecureCookies: false,
 	}
-	return NewRouter(cfg, logger, taskSvc, userSvc, nil, nil)
+	return NewRouter(cfg, logger, taskSvc, userSvc, nil, nil, nil)
 }
 
 func registerAndLogin(t *testing.T, router http.Handler, email, name, password string) *http.Cookie {

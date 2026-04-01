@@ -3,8 +3,6 @@ package database
 import (
 	"context"
 	"database/sql"
-	"fmt"
-	"time"
 
 	"github.com/rxritet/Specto/internal/domain"
 )
@@ -40,7 +38,7 @@ func (r *PgAccountRepo) GetByID(ctx context.Context, id int64) (*domain.Account,
 	return acc, nil
 }
 
-func (r *PgAccountRepo) ListByUserID(ctx context.Context, userID int64) ([]*domain.Account, error) {
+func (r *PgAccountRepo) GetByUserID(ctx context.Context, userID int64) ([]*domain.Account, error) {
 	q := Conn(ctx, r.db)
 	rows, err := q.QueryContext(ctx,
 		`SELECT id, user_id, currency, balance, created_at, updated_at
@@ -89,7 +87,7 @@ func (r *PgTransferRepo) Create(ctx context.Context, tr *domain.Transfer) error 
 	).Scan(&tr.ID, &tr.CreatedAt)
 }
 
-func (r *PgTransferRepo) ListByAccountID(ctx context.Context, accountID int64) ([]*domain.Transfer, error) {
+func (r *PgTransferRepo) GetByAccountID(ctx context.Context, accountID int64) ([]*domain.Transfer, error) {
 	q := Conn(ctx, r.db)
 	rows, err := q.QueryContext(ctx,
 		`SELECT id, sender_account_id, receiver_account_id, amount, currency, description, created_at

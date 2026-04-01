@@ -39,7 +39,7 @@ func TestRedisSessionLifecycle(t *testing.T) {
 		RateLimitPerMinute: 60,
 	}
 
-	router := NewRouter(cfg, logger, taskSvc, userSvc, rdb, nil)
+	router := NewRouter(cfg, logger, taskSvc, userSvc, nil, rdb, nil)
 
 	cookie := registerAndLogin(t, router, "redis-user@example.com", "Redis User", "password123")
 	if cookie == nil || cookie.Value == "" {
@@ -102,7 +102,7 @@ func TestRedisSessionMissingKeyUnauthorized(t *testing.T) {
 		RateLimitPerMinute: 60,
 	}
 
-	router := NewRouter(cfg, logger, taskSvc, userSvc, rdb, nil)
+	router := NewRouter(cfg, logger, taskSvc, userSvc, nil, rdb, nil)
 
 	body, err := json.Marshal(map[string]string{
 		"email":    "ghost@example.com",

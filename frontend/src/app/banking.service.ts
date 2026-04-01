@@ -26,9 +26,9 @@ export interface TransferRequest {
   providedIn: 'root'
 })
 export class BankingService {
-  private apiUrl = '/api'; // Проксируется через nginx
+  private readonly apiUrl = '/api'; // Проксируется через nginx
 
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   getAccounts(): Observable<Account[]> {
     return this.http.get<Account[]>(`${this.apiUrl}/accounts`);

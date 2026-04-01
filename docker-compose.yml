@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: bank_db
     ports:
-      - "5433:5432"
+      - "5435:5432" # Смена порта на 5435 из-за конфликтов на 5432-5434
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped

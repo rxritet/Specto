@@ -62,7 +62,7 @@ type Card struct {
 	CreatedAt  time.Time `json:"created_at"`
 }
 
-// ---------- Transaction ----------
+// ---------- Transaction (aka Transfer) ----------
 
 type TransactionType string
 
@@ -71,6 +71,23 @@ const (
 	TxWithdrawal TransactionType = "withdrawal"
 	TxTransfer   TransactionType = "transfer"
 )
+
+type Transfer struct {
+	ID                int64     `json:"id"`
+	SenderAccountID   int64     `json:"sender_account_id"`
+	ReceiverAccountID int64     `json:"receiver_account_id"`
+	Amount            int64     `json:"amount"` // in cents
+	Currency          string    `json:"currency"`
+	Description       string    `json:"description"`
+	CreatedAt         time.Time `json:"created_at"`
+}
+
+type CreateTransferRequest struct {
+	ReceiverAccountID int64  `json:"receiver_account_id"`
+	Amount            int64  `json:"amount"`
+	Currency          string `json:"currency"`
+	Description       string `json:"description"`
+}
 
 type Transaction struct {
 	ID        int64           `json:"id"`
@@ -107,6 +124,11 @@ type AccountRepository interface {
 	GetByID(ctx context.Context, id int64) (*Account, error)
 	GetByUserID(ctx context.Context, userID int64) ([]*Account, error)
 	UpdateBalance(ctx context.Context, accountID int64, amount int64) error
+}
+
+type TransferRepository interface {
+	Create(ctx context.Context, transfer *Transfer) error
+	GetByAccountID(ctx context.Context, accountID int64) ([]*Transfer, error)
 }
 
 type CardRepository interface {

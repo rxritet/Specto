@@ -88,13 +88,17 @@ func (rt *Router) routes() {
 // ---------- Handlers ----------
 
 func (rt *Router) handleAccountList(w http.ResponseWriter, r *http.Request) {
-	user := rt.auth.fromContext(r.Context())
-	accounts, err := rt.Banking.GetUserAccounts(r.Context(), user.ID)
-	if err != nil {
-		rt.errorResponse(w, r, http.StatusInternalServerError, err)
+	user, ok := currentUser(r)
+	if !ok {
+		rt.respondError(w, http.StatusUnauthorized, authenticationRequiredMessage)
 		return
 	}
-	rt.writeJSON(w, http.StatusOK, accounts)
+	accounts, err := rt.Banking.GetUserAccounts(r.Context(), user.ID)
+	if err != nil {
+		rt.handleServiceError(w, err)
+		return
+	}
+	rt.respondJSON(w, http.StatusOK, accounts)
 }
 
 func (rt *Router) handleAccountCreate(w http.ResponseWriter, r *http.Request) {
@@ -102,36 +106,46 @@ func (rt *Router) handleAccountCreate(w http.ResponseWriter, r *http.Request) {
 		Currency string `json:"currency"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		rt.errorResponse(w, r, http.StatusBadRequest, err)
+		rt.respondError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	user := rt.auth.fromContext(r.Context())
+	user, ok := currentUser(r)
+	if !ok {
+		rt.respondError(w, http.StatusUnauthorized, authenticationRequiredMessage)
+		return
+	}
 	acc, err := rt.Banking.CreateAccount(r.Context(), user.ID, req.Currency)
 	if err != nil {
-		rt.errorResponse(w, r, http.StatusInternalServerError, err)
+		rt.handleServiceError(w, err)
 		return
 	}
-	rt.writeJSON(w, http.StatusCreated, acc)
+	rt.respondJSON(w, http.StatusCreated, acc)
 }
 
 func (rt *Router) handleTransferCreate(w http.ResponseWriter, r *http.Request) {
-	idStr := r.PathValue("id")
-	var id int64
-	fmt.Sscanf(idStr, "%d", &id)
+	id, err := pathInt64(r, "id")
+	if err != nil {
+		rt.respondError(w, http.StatusBadRequest, "invalid account id")
+		return
+	}
 
 	var req domain.CreateTransferRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		rt.errorResponse(w, r, http.StatusBadRequest, err)
+		rt.respondError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	user := rt.auth.fromContext(r.Context())
-	transfer, err := rt.Banking.Transfer(r.Context(), user.ID, req, id)
-	if err != nil {
-		rt.errorResponse(w, r, http.StatusUnprocessableEntity, err)
+	user, ok := currentUser(r)
+	if !ok {
+		rt.respondError(w, http.StatusUnauthorized, authenticationRequiredMessage)
 		return
 	}
-	rt.writeJSON(w, http.StatusCreated, transfer)
+	transfer, err := rt.Banking.Transfer(r.Context(), user.ID, req, id)
+	if err != nil {
+		rt.handleServiceError(w, err)
+		return
+	}
+	rt.respondJSON(w, http.StatusCreated, transfer)
 }
 
 // handleHealth responds with a simple JSON status.
