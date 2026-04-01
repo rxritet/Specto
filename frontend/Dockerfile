@@ -8,7 +8,7 @@ RUN npm run build
 
 # Этап раздачи статики через nginx
 FROM nginx:alpine
-COPY --from=frontend-builder /app/dist/frontend /usr/share/nginx/html
-# Копируем конфиг nginx для SPA, если есть (или используем дефолтный)
+COPY --from=frontend-builder /app/dist/frontend/browser /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
