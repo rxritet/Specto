@@ -25,13 +25,13 @@ type Server struct {
 }
 
 // New creates a Server configured with the given Config and logger.
-func New(cfg *config.Config, logger *slog.Logger, tasks *service.TaskService, users *service.UserService, redisClient *redis.Client, auditLogger domain.AuditLogger) *Server {
+func New(cfg *config.Config, logger *slog.Logger, tasks *service.TaskService, users *service.UserService, banking *service.BankingService, redisClient *redis.Client, auditLogger domain.AuditLogger) *Server {
 	s := &Server{
 		cfg:    cfg,
 		logger: logger,
 	}
 
-	handler := web.NewRouter(cfg, logger, tasks, users, redisClient, auditLogger)
+	handler := web.NewRouter(cfg, logger, tasks, users, banking, redisClient, auditLogger)
 
 	s.http = &http.Server{
 		Addr:         cfg.Addr(),

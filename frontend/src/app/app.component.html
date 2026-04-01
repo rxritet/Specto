@@ -24,21 +24,20 @@
     <div class="card accounts-card">
       <div class="card-header">
         <h2>Мои счета</h2>
-        <button class="btn-icon">+</button>
+        <button class="btn-icon" (click)="loadAccounts()">↻</button>
       </div>
-      <div class="account-item">
-        <div class="acc-info">
-          <span class="acc-name">Текущий счет KZT</span>
-          <span class="acc-number">KZ49...0092</span>
-        </div>
-        <div class="acc-balance">1 250 500.00 ₸</div>
+
+      <div *ngIf="accounts.length === 0" class="empty-state">
+        <p>У вас еще нет открытых счетов.</p>
+        <button class="btn-primary" (click)="loadAccounts()">Обновить</button>
       </div>
-      <div class="account-item">
+
+      <div *ngFor="let acc of accounts" class="account-item">
         <div class="acc-info">
-          <span class="acc-name">Сберегательный USD</span>
-          <span class="acc-number">KZ12...8841</span>
+          <span class="acc-name">{{ acc.currency }} Account</span>
+          <span class="acc-number">Acc ID: {{ acc.id }}</span>
         </div>
-        <div class="acc-balance">5 200.50 $</div>
+        <div class="acc-balance">{{ formatCurrency(acc.balance, acc.currency) }}</div>
       </div>
     </div>
 

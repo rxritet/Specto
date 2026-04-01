@@ -14,26 +14,28 @@ import (
 // Router holds references shared by all HTTP handlers and exposes a
 // configured http.Handler ready to be plugged into net/http.Server.
 type Router struct {
-	Mux    *http.ServeMux
-	Logger *slog.Logger
-	Tasks  *service.TaskService
-	Users  *service.UserService
-	Audit  domain.AuditLogger
-	auth   *sessionManager
+	Mux     *http.ServeMux
+	Logger  *slog.Logger
+	Tasks   *service.TaskService
+	Users   *service.UserService
+	Banking *service.BankingService // Добавлено для банковских операций
+	Audit   domain.AuditLogger
+	auth    *sessionManager
 }
 
 // NewRouter creates the application ServeMux, registers all routes using
 // Go 1.22+ pattern matching, and wraps the mux with the middleware stack.
-func NewRouter(cfg *config.Config, logger *slog.Logger, tasks *service.TaskService, users *service.UserService, redisClient *redis.Client, auditLogger domain.AuditLogger) http.Handler {
+func NewRouter(cfg *config.Config, logger *slog.Logger, tasks *service.TaskService, users *service.UserService, banking *service.BankingService, redisClient *redis.Client, auditLogger domain.AuditLogger) http.Handler {
 	redisConn := redisClient
 
 	r := &Router{
-		Mux:    http.NewServeMux(),
-		Logger: logger,
-		Tasks:  tasks,
-		Users:  users,
-		Audit:  auditLogger,
-		auth:   newSessionManager(cfg, redisConn),
+		Mux:     http.NewServeMux(),
+		Logger:  logger,
+		Tasks:   tasks,
+		Users:   users,
+		Banking: banking,
+		Audit:   auditLogger,
+		auth:    newSessionManager(cfg, redisConn),
 	}
 
 	r.routes()
@@ -76,9 +78,61 @@ func (rt *Router) routes() {
 	rt.Mux.Handle("GET /tasks/{id}", rt.requireAuth(http.HandlerFunc(rt.handleTaskGet)))
 	rt.Mux.Handle("PUT /tasks/{id}", rt.requireAuth(http.HandlerFunc(rt.handleTaskUpdate)))
 	rt.Mux.Handle("DELETE /tasks/{id}", rt.requireAuth(http.HandlerFunc(rt.handleTaskDelete)))
+
+	// Banking API.
+	rt.Mux.Handle("GET /accounts", rt.requireAuth(http.HandlerFunc(rt.handleAccountList)))
+	rt.Mux.Handle("POST /accounts", rt.requireAuth(http.HandlerFunc(rt.handleAccountCreate)))
+	rt.Mux.Handle("POST /accounts/{id}/transfer", rt.requireAuth(http.HandlerFunc(rt.handleTransferCreate)))
 }
 
 // ---------- Handlers ----------
+
+func (rt *Router) handleAccountList(w http.ResponseWriter, r *http.Request) {
+	user := rt.auth.fromContext(r.Context())
+	accounts, err := rt.Banking.GetUserAccounts(r.Context(), user.ID)
+	if err != nil {
+		rt.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	rt.writeJSON(w, http.StatusOK, accounts)
+}
+
+func (rt *Router) handleAccountCreate(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Currency string `json:"currency"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		rt.errorResponse(w, r, http.StatusBadRequest, err)
+		return
+	}
+	user := rt.auth.fromContext(r.Context())
+	acc, err := rt.Banking.CreateAccount(r.Context(), user.ID, req.Currency)
+	if err != nil {
+		rt.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	rt.writeJSON(w, http.StatusCreated, acc)
+}
+
+func (rt *Router) handleTransferCreate(w http.ResponseWriter, r *http.Request) {
+	idStr := r.PathValue("id")
+	var id int64
+	fmt.Sscanf(idStr, "%d", &id)
+
+	var req domain.CreateTransferRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		rt.errorResponse(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	user := rt.auth.fromContext(r.Context())
+	transfer, err := rt.Banking.Transfer(r.Context(), user.ID, req, id)
+	if err != nil {
+		rt.errorResponse(w, r, http.StatusUnprocessableEntity, err)
+		return
+	}
+	rt.writeJSON(w, http.StatusCreated, transfer)
+}
 
 // handleHealth responds with a simple JSON status.
 func (rt *Router) handleHealth(w http.ResponseWriter, r *http.Request) {

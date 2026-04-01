@@ -61,7 +61,12 @@ var serverCmd = &cobra.Command{
 		userSvc := service.NewUserService(userRepo, logger)
 		taskSvc := service.NewTaskService(taskRepo, userRepo, logger)
 
-		srv := server.New(cfg, logger, taskSvc, userSvc, redisClient, auditLogger)
+		// Инициализация банковского сервиса
+		accRepo := database.NewPgAccountRepo(pg)
+		trRepo := database.NewPgTransferRepo(pg)
+		bankingSvc := service.NewBankingService(accRepo, trRepo, pg)
+
+		srv := server.New(cfg, logger, taskSvc, userSvc, bankingSvc, redisClient, auditLogger)
 		return srv.Run()
 	},
 }
