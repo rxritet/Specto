@@ -1,33 +1,81 @@
-<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
-<!-- * * * * * * * * * * * The content below * * * * * * * * * * * -->
-<!-- * * * * * * * * * * is only a placeholder * * * * * * * * * * -->
-<!-- * * * * * * * * * * and can be replaced.  * * * * * * * * * * -->
-<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
-<!-- * * * * * * * * * Delete the template below * * * * * * * * * -->
-<!-- * * * * * * * to get started with your project! * * * * * * * -->
-<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
+<header class="navbar">
+  <div class="logo">SPECTO <span>BANK</span></div>
+  <nav>
+    <a href="#" class="nav-item active">Личный кабинет</a>
+    <a href="#" class="nav-item">Мои счета</a>
+    <a href="#" class="nav-item">Платежи</a>
+  </nav>
+  <div class="user-profile">
+    <div class="avatar">U</div>
+    <span>Пользователь</span>
+  </div>
+</header>
 
-<style>
-  :host {
-    --bright-blue: oklch(51.01% 0.274 263.83);
-    --electric-violet: oklch(53.18% 0.28 296.97);
-    --french-violet: oklch(47.66% 0.246 305.88);
-    --vivid-pink: oklch(69.02% 0.277 332.77);
-    --hot-red: oklch(61.42% 0.238 15.34);
-    --orange-red: oklch(63.32% 0.24 31.68);
+<main class="dashboard">
+  <section class="accent-hero">
+    <div class="hero-content">
+      <h1>Добро пожаловать в Specto</h1>
+      <p>Миграция банковских систем в процессе. Ваши счета скоро будут здесь.</p>
+    </div>
+  </section>
 
-    --gray-900: oklch(19.37% 0.006 300.98);
-    --gray-700: oklch(36.98% 0.014 302.71);
-    --gray-400: oklch(70.9% 0.015 304.04);
+  <div class="grid-layout">
+    <!-- Accounts Section -->
+    <div class="card accounts-card">
+      <div class="card-header">
+        <h2>Мои счета</h2>
+        <button class="btn-icon">+</button>
+      </div>
+      <div class="account-item">
+        <div class="acc-info">
+          <span class="acc-name">Текущий счет KZT</span>
+          <span class="acc-number">KZ49...0092</span>
+        </div>
+        <div class="acc-balance">1 250 500.00 ₸</div>
+      </div>
+      <div class="account-item">
+        <div class="acc-info">
+          <span class="acc-name">Сберегательный USD</span>
+          <span class="acc-number">KZ12...8841</span>
+        </div>
+        <div class="acc-balance">5 200.50 $</div>
+      </div>
+    </div>
 
-    --red-to-pink-to-purple-vertical-gradient: linear-gradient(
-      180deg,
-      var(--orange-red) 0%,
-      var(--vivid-pink) 50%,
-      var(--electric-violet) 100%
-    );
+    <!-- Quick Actions -->
+    <div class="card actions-card">
+      <h2>Быстрые действия</h2>
+      <div class="actions-grid">
+        <button class="action-btn">
+          <div class="icon">⇄</div>
+          <span>Перевод</span>
+        </button>
+        <button class="action-btn">
+          <div class="icon">💳</div>
+          <span>Выпустить карту</span>
+        </button>
+        <button class="action-btn">
+          <div class="icon">📄</div>
+          <span>Выписка</span>
+        </button>
+      </div>
+    </div>
 
-    --red-to-pink-to-purple-horizontal-gradient: linear-gradient(
+    <!-- Legacy Tasks (Temporarily kept) -->
+    <div class="card tasks-card">
+      <div class="card-header">
+        <h2>Старые задачи (Legacy)</h2>
+      </div>
+      <div class="task-list">
+        <div class="task-item">Завершить миграцию Ledger</div>
+        <div class="task-item">Настроить Swift-интеграцию</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<router-outlet></router-outlet>
+
       90deg,
       var(--orange-red) 0%,
       var(--vivid-pink) 50%,
