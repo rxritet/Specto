@@ -7,7 +7,7 @@ COPY . .
 RUN go build -o specto ./cmd/specto
 
 # Финальный образ
-FROM alpine:latest
+FROM alpine:3.21
 WORKDIR /root/
 COPY --from=backend-builder /app/specto .
 # Копируем миграции, если они нужны в рантайме
